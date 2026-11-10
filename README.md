@@ -2,7 +2,7 @@
 
 [![CI][ci-badge]][ci] [![PyPI][pypi-badge]][pypi]
 
-Yurli is a Python package.
+yurli is a Python package.
 
 ## Development setup
 
@@ -31,9 +31,11 @@ steps.
 
 Versions come from Git tags through `hatch-vcs`. Publishing a GitHub Release starts the
 publish workflow, which validates the package and publishes to PyPI using trusted
-publishing. The workflow uses the PyPI project `yurli` and the GitHub environment `pypi`.
+publishing. The workflow uses the PyPI project `yurli` and the GitHub environment
+`pypi`.
 
 [ci]: https://github.com/xozoid/yurli/actions/workflows/ci.yml?query=branch%3Amain
-[ci-badge]: https://github.com/xozoid/yurli/actions/workflows/ci.yml/badge.svg?branch=main
+[ci-badge]:
+  https://github.com/xozoid/yurli/actions/workflows/ci.yml/badge.svg?branch=main
 [pypi]: https://pypi.org/project/yurli
 [pypi-badge]: https://img.shields.io/pypi/v/yurli.svg

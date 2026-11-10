@@ -4,9 +4,9 @@
 
 This repository is a Python package named `yurli`. The import package lives in `yurli/`,
 tests live in `tests/`, project and tool configuration lives in `pyproject.toml`, and
-GitHub Actions workflows live in `.github/workflows/`. Keep the established
-architecture unless a change is explicitly requested. Prefer focused changes and
-avoid unnecessary dependencies or abstractions.
+GitHub Actions workflows live in `.github/workflows/`. Keep the established architecture
+unless a change is explicitly requested. Prefer focused changes and avoid unnecessary
+dependencies or abstractions.
 
 ## Tooling
 

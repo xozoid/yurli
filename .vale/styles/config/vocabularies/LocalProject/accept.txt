@@ -3,3 +3,4 @@ Dependabot('s)?
 new-project
 pytest
 uv
+yurli

@@ -134,4 +134,8 @@ jobs:
       - run: uv build
       - run: uv venv --no-project /tmp/wheel-test
       - run: uv pip install --python /tmp/wheel-test/bin/python dist/*.whl
-      - run: cd /tmp && /tmp/wheel-test/bin/python -c "import yurli"
+      - name: Verify installed wheel import
+        run: |
+          tmpdir=$(mktemp -d)
+          cd "$tmpdir"
+          /tmp/wheel-test/bin/python -c "import yurli"
