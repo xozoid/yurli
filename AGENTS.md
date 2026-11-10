@@ -2,12 +2,11 @@
 
 ## Project structure
 
-This repository is a Python package template. The import package currently lives in
-`new_project/` (use the configured package path after initialization), tests live in
-`tests/`, project and tool configuration lives in `pyproject.toml`, and GitHub Actions
-workflows live in `.github/workflows/`. Keep the established architecture unless a
-change is explicitly requested. Prefer focused changes and avoid unnecessary
-dependencies or abstractions.
+This repository is a Python package named `yurli`. The import package lives in `yurli/`,
+tests live in `tests/`, project and tool configuration lives in `pyproject.toml`, and
+GitHub Actions workflows live in `.github/workflows/`. Keep the established
+architecture unless a change is explicitly requested. Prefer focused changes and
+avoid unnecessary dependencies or abstractions.
 
 ## Tooling
 

@@ -13,11 +13,11 @@ classifiers = [
   "Programming Language :: Python :: 3.15",
 ]
 dependencies = []
-description = "A Python project."
-keywords = ["python"]
+description = "Cute URLs for ugly IDs. A fast, stateless, reversible, profanity-free integer obfuscation library for Python."
+keywords = ["yurli", "python"]
 license = "MIT"
 license-files = ["LICENSE"]
-name = "new-project"
+name = "yurli"
 readme = "README.md"
 requires-python = ">=3.12"
 dynamic = ["version"]
@@ -44,7 +44,7 @@ dev = [
 ]
 
 [tool.basedpyright]
-include = ["new_project", "tests"]
+include = ["yurli", "tests"]
 pythonVersion = "3.12"
 typeCheckingMode = "strict"
 venv = ".venv"
@@ -57,7 +57,7 @@ show_missing = true
 
 [tool.coverage.run]
 branch = true
-source = ["new_project"]
+source = ["yurli"]
 
 [tool.sync-with-uv.repo-to-package]
 "https://github.com/DetachHead/basedpyright-prek-mirror" = "basedpyright"
@@ -110,4 +110,4 @@ source = "vcs"
 fallback-version = "0.1.0"
 
 [tool.hatch.build.targets.wheel]
-packages = ["new_project"]
+packages = ["yurli"]
