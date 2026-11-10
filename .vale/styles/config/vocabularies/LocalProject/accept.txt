@@ -1,0 +1,5 @@
+Coverage.py
+Dependabot('s)?
+new-project
+pytest
+uv

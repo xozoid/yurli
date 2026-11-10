@@ -1,0 +1,44 @@
+name: Publish to PyPI
+on:
+  release:
+    types: [published]
+permissions:
+  contents: read
+jobs:
+  validate:
+    uses: ./.github/workflows/ci.yml
+  publish:
+    needs: validate
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/new-project
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.15"
+      - run: uv build
+      - name: Verify release tag matches package version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          python - <<'PY'
+          from email import message_from_bytes
+          from os import environ
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          wheel = next(Path("dist").glob("*.whl"))
+          with ZipFile(wheel) as archive:
+              metadata_path = next(path for path in archive.namelist() if path.endswith(".dist-info/METADATA"))
+              version = message_from_bytes(archive.read(metadata_path))["Version"]
+          tag = environ["RELEASE_TAG"]
+          if tag.removeprefix("v") != version:
+              raise SystemExit(f"Release tag {tag!r} does not match package version {version!r}")
+          PY
+      - uses: pypa/gh-action-pypi-publish@release/v1

@@ -1,0 +1,15 @@
+# Version control metadata
+.git
+
+# Local environments and dependencies
+.venv
+node_modules
+
+# Generated Vale styles
+.vale/styles
+
+# Build output
+dist
+
+# Dependency lockfile
+uv.lock

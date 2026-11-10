@@ -1,0 +1,29 @@
+# Local environments and secrets
+.venv/
+.env*
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.basedpyright/
+
+# Vale's downloaded style packages and scratch data
+.vale/styles/*
+!.vale/styles/config
+
+# Coverage output
+.coverage
+.coverage.*
+coverage.xml
+coverage.json
+htmlcov/
+
+# JavaScript dependencies
+node_modules/
+
+# Build and packaging output
+dist/
+build/
+*.egg-info/

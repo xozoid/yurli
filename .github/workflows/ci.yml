@@ -1,0 +1,137 @@
+name: CI
+on:
+  workflow_call:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13", "3.14", "3.15"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - run: uv sync --locked --no-default-groups --group test
+      - run: uv run --no-sync pytest
+  minimum-runtime-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - name: Resolve minimum runtime dependencies
+        run: |
+          uv venv --python 3.12 .venv-minimum
+          uv pip install --python .venv-minimum/bin/python --resolution lowest-direct .
+          uv pip freeze --python .venv-minimum/bin/python > /tmp/minimum-constraints.txt
+      - name: Install locked pytest
+        run: |
+          PYTEST_VERSION=$(python -c "
+          import tomllib
+          with open('uv.lock', 'rb') as f:
+              lock = tomllib.load(f)
+          print(next(p['version'] for p in lock['package'] if p['name'] == 'pytest'))
+          ")
+          uv pip install --python .venv-minimum/bin/python --constraint /tmp/minimum-constraints.txt "pytest==$PYTEST_VERSION"
+      - name: Verify minimum dependencies were preserved
+        run: |
+          uv pip freeze --python .venv-minimum/bin/python > /tmp/after.txt
+          grep -Fxf /tmp/minimum-constraints.txt /tmp/after.txt | diff - /tmp/minimum-constraints.txt
+      - name: Run tests
+        run: .venv-minimum/bin/python -m pytest
+  ruff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.15"
+          enable-cache: true
+      - run: uv sync --locked --no-default-groups --group lint
+      - run: uv run --no-sync ruff check .
+  types:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.15"
+          enable-cache: true
+      - run: uv sync --locked --no-default-groups --group types
+      - run: uv run --no-sync basedpyright
+  formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.15"
+          enable-cache: true
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: uv sync --locked --no-default-groups --group format
+      - run: npm ci
+      - run: uv run --no-sync ruff format --check .
+      - run: npm exec --no -- prettier --check .
+      - run: uv run --no-sync taplo fmt --check '*.toml'
+      - run: uv run --no-sync prek run yamlfmt --all-files
+  sync-with-uv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --locked --no-default-groups --only-group prek --no-install-project
+      - run: uv run --no-sync prek run --all-files sync-with-uv
+      - run: git diff --exit-code
+  spelling:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.15"
+          enable-cache: true
+      - run: uv sync --locked --no-default-groups --group spell
+      - run: uv run --no-sync codespell --skip=node_modules .
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.15"
+          enable-cache: true
+      - run: uv sync --locked --no-default-groups --group coverage
+      - run: uv run --no-sync coverage run -m pytest
+      - run: uv run --no-sync coverage report
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: coverage-data
+          path: .coverage
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.15"
+          enable-cache: true
+      - run: uv build
+      - run: uv venv --no-project /tmp/wheel-test
+      - run: uv pip install --python /tmp/wheel-test/bin/python dist/*.whl
+      - run: /tmp/wheel-test/bin/python -c "import new_project"
