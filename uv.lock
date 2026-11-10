@@ -167,74 +167,6 @@ wheels = [
 ]
 
 [[package]]
-name = "new-project"
-source = { editable = "." }
-
-[package.dev-dependencies]
-coverage = [
-    { name = "coverage" },
-    { name = "pytest" },
-]
-dev = [
-    { name = "basedpyright" },
-    { name = "build" },
-    { name = "codespell" },
-    { name = "coverage" },
-    { name = "prek" },
-    { name = "pytest" },
-    { name = "ruff" },
-    { name = "taplo" },
-]
-format = [
-    { name = "prek" },
-    { name = "ruff" },
-    { name = "taplo" },
-]
-lint = [
-    { name = "ruff" },
-]
-prek = [
-    { name = "prek" },
-]
-spell = [
-    { name = "codespell" },
-]
-test = [
-    { name = "pytest" },
-]
-types = [
-    { name = "basedpyright" },
-]
-
-[package.metadata]
-
-[package.metadata.requires-dev]
-coverage = [
-    { name = "coverage", extras = ["toml"], specifier = "==7.17.2" },
-    { name = "pytest", specifier = "==9.2.0" },
-]
-dev = [
-    { name = "basedpyright", specifier = "==1.40.2" },
-    { name = "build", specifier = "==1.6.1" },
-    { name = "codespell", specifier = "==2.4.3" },
-    { name = "coverage", extras = ["toml"], specifier = "==7.17.2" },
-    { name = "prek", specifier = "==0.5.10" },
-    { name = "pytest", specifier = "==9.2.0" },
-    { name = "ruff", specifier = "==0.17.4" },
-    { name = "taplo", specifier = "==0.9.3" },
-]
-format = [
-    { name = "prek", specifier = "==0.5.10" },
-    { name = "ruff", specifier = "==0.17.4" },
-    { name = "taplo", specifier = "==0.9.3" },
-]
-lint = [{ name = "ruff", specifier = "==0.17.4" }]
-prek = [{ name = "prek", specifier = "==0.5.10" }]
-spell = [{ name = "codespell", specifier = "==2.4.3" }]
-test = [{ name = "pytest", specifier = "==9.2.0" }]
-types = [{ name = "basedpyright", specifier = "==1.40.2" }]
-
-[[package]]
 name = "nodejs-wheel-binaries"
 version = "24.19.0"
 source = { registry = "https://pypi.org/simple" }
@@ -357,3 +289,71 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/21/15/d8db1db6382b444122fa1a66fe5fe0dd5b04bfbe68c74bdb5345aec11eb2/taplo-0.9.3-py3-none-win32.whl", hash = "sha256:9ab7df76a3facc6d0dd2fe2dae3e8eb52fa458d31d27878d5eac14f5cbc0abac", size = 3482612, upload-time = "2024-08-19T10:22:10.904Z" },
     { url = "https://files.pythonhosted.org/packages/42/3c/df6641d7e2e84a6dd4de3b3a4426db7f6a7270c05bbdeadd523645c9c45f/taplo-0.9.3-py3-none-win_amd64.whl", hash = "sha256:7d80b630b93fb43cee99d1e1ee07b616236dc5615efaf7cd51074b4cffc33bab", size = 3985843, upload-time = "2024-08-19T10:22:13.446Z" },
 ]
+
+[[package]]
+name = "yurli"
+source = { editable = "." }
+
+[package.dev-dependencies]
+coverage = [
+    { name = "coverage" },
+    { name = "pytest" },
+]
+dev = [
+    { name = "basedpyright" },
+    { name = "build" },
+    { name = "codespell" },
+    { name = "coverage" },
+    { name = "prek" },
+    { name = "pytest" },
+    { name = "ruff" },
+    { name = "taplo" },
+]
+format = [
+    { name = "prek" },
+    { name = "ruff" },
+    { name = "taplo" },
+]
+lint = [
+    { name = "ruff" },
+]
+prek = [
+    { name = "prek" },
+]
+spell = [
+    { name = "codespell" },
+]
+test = [
+    { name = "pytest" },
+]
+types = [
+    { name = "basedpyright" },
+]
+
+[package.metadata]
+
+[package.metadata.requires-dev]
+coverage = [
+    { name = "coverage", extras = ["toml"], specifier = "==7.17.2" },
+    { name = "pytest", specifier = "==9.2.0" },
+]
+dev = [
+    { name = "basedpyright", specifier = "==1.40.2" },
+    { name = "build", specifier = "==1.6.1" },
+    { name = "codespell", specifier = "==2.4.3" },
+    { name = "coverage", extras = ["toml"], specifier = "==7.17.2" },
+    { name = "prek", specifier = "==0.5.10" },
+    { name = "pytest", specifier = "==9.2.0" },
+    { name = "ruff", specifier = "==0.17.4" },
+    { name = "taplo", specifier = "==0.9.3" },
+]
+format = [
+    { name = "prek", specifier = "==0.5.10" },
+    { name = "ruff", specifier = "==0.17.4" },
+    { name = "taplo", specifier = "==0.9.3" },
+]
+lint = [{ name = "ruff", specifier = "==0.17.4" }]
+prek = [{ name = "prek", specifier = "==0.5.10" }]
+spell = [{ name = "codespell", specifier = "==2.4.3" }]
+test = [{ name = "pytest", specifier = "==9.2.0" }]
+types = [{ name = "basedpyright", specifier = "==1.40.2" }]
