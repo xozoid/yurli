@@ -1,5 +1,7 @@
 = yurli architecture and mathematical design
 
+:stem: latexmath
+
 == Scope
 
 This document establishes the proposed design for yurli before implementation of its
