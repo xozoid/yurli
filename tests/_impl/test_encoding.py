@@ -33,13 +33,37 @@ def test_boundary_values_round_trip(bits: IntegerWidth) -> None:
     assert decoded_values == list(values)
 
 
-def test_base62_encoding_is_canonical() -> None:
+def test_16_bit_domain_round_trips() -> None:
+    encoder = AlphabetEncoder(bits=16)
+    failures: list[tuple[int, str, int]] = []
+
+    for value in range(1 << 16):
+        identifier = encoder.encode(value)
+        decoded = encoder.decode(identifier)
+
+        if decoded != value or len(identifier) != encoder.length:
+            failures.append((value, identifier, decoded))
+
+    assert not failures, f"{len(failures)} failures; first 10: {failures[:10]}"
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (0, "000"),
+        (9, "009"),
+        (10, "00A"),
+        (35, "00Z"),
+        (36, "00a"),
+        (61, "00z"),
+        (62, "010"),
+    ],
+)
+def test_base62_canonical_encoding(value: int, expected: str) -> None:
     encoder = AlphabetEncoder(bits=16)
 
-    identifier = encoder.encode(1)
-
-    assert identifier == "001"
-    assert encoder.decode(identifier) == 1
+    assert encoder.encode(value) == expected
+    assert encoder.decode(expected) == value
 
 
 @pytest.mark.parametrize("identifier", ["1", "0001", "00-", "00_"])
