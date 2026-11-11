@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 import random
+from typing import TYPE_CHECKING
 
 import pytest
 
 from yurli._impl.permutation import (
     _UINT64_MASK,
     IntegerPermutation,
-    IntegerWidth,
-    RoundKeys,
 )
+
+if TYPE_CHECKING:
+    from yurli.types import IntegerWidth, RoundKeys
 
 _TEST_KEYS = (0, 1, 0x123456789ABCDEF0, _UINT64_MASK)
 
@@ -70,8 +72,10 @@ def test_generated_permutation_has_four_reusable_round_keys(bits: IntegerWidth) 
     assert restored.permute(123) == original.permute(123)
 
 
-@pytest.mark.parametrize("bits", [16, 32, 64])
-@pytest.mark.parametrize("value", [-1, _UINT64_MASK + 1])
+@pytest.mark.parametrize(
+    ("bits", "value"),
+    [(bits, value) for bits in (16, 32, 64) for value in (-1, 1 << bits)],
+)
 def test_values_outside_configured_domain_are_rejected(
     bits: IntegerWidth,
     value: int,

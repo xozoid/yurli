@@ -8,11 +8,14 @@ from yurli.api import (
     Yurli,
     YurliConfig,
 )
+from yurli.types import IntegerWidth, RoundKeys
 
 __all__ = [
     "EXAMPLE_BLOCKLIST",
     "ConfigurationFormatVersion",
+    "IntegerWidth",
     "PermutationAlgorithmVersion",
+    "RoundKeys",
     "Yurli",
     "YurliConfig",
     "__version__",

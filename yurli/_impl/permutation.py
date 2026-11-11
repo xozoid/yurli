@@ -3,16 +3,16 @@
 from __future__ import annotations
 
 import secrets
-from typing import Literal
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from yurli.types import IntegerWidth, RoundKeys
 
 _SUPPORTED_BITS = (16, 32, 64)
 _ROUND_COUNT = 4
 _UINT64_MASK = (1 << 64) - 1
 _SPLITMIX_MULTIPLIER_1 = 0xBF58476D1CE4E5B9
 _SPLITMIX_MULTIPLIER_2 = 0x94D049BB133111EB
-
-type IntegerWidth = Literal[16, 32, 64]
-type RoundKeys = tuple[int, int, int, int]
 
 
 class IntegerPermutation:

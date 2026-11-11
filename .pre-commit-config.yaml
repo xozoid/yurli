@@ -12,9 +12,12 @@ repos:
     rev: v2.4.3
     hooks:
       - id: codespell
-        additional_dependencies:
-          - tomli
-        stages: [pre-commit, commit-msg]
+        additional_dependencies: [tomli]
+
+      - id: codespell
+        name: codespell-commit-msg
+        stages: [commit-msg]
+        types: []
 
   - repo: https://github.com/ComPWA/taplo-pre-commit
     rev: v0.9.3

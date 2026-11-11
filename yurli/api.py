@@ -6,7 +6,7 @@ from enum import IntEnum
 from typing import TYPE_CHECKING, Self, TypedDict, Unpack
 
 if TYPE_CHECKING:
-    from yurli._impl.permutation import IntegerWidth, RoundKeys
+    from yurli.types import IntegerWidth, RoundKeys
 
 EXAMPLE_BLOCKLIST: set[str] = set()
 
