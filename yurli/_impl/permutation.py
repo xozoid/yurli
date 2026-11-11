@@ -25,16 +25,9 @@ class IntegerPermutation:
     The permutation provides reversible obfuscation, not cryptographic security.
     """
 
-    __slots__ = (
-        "_bits",
-        "_bits_half",
-        "_max_value",
-        "_round_keys",
-    )
-
     def __init__(
         self,
-        bits: IntegerWidth = 64,
+        bits: IntegerWidth,
         round_keys: RoundKeys | None = None,
     ) -> None:
         """Create a permutation with generated or supplied round keys.
