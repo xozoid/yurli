@@ -1,9 +1,15 @@
+from __future__ import annotations
+
+from importlib.metadata import version
+
 import pytest
 
 from yurli import (
     EXAMPLE_BLOCKLIST,
-    ConfigurationFormatVersion,
-    PermutationAlgorithmVersion,
+    IntegerWidth,
+    RoundKeys,
+    __version__,
+    types,
 )
 from yurli.api import Yurli
 
@@ -12,14 +18,22 @@ def test_example_blocklist_is_empty() -> None:
     assert set() == EXAMPLE_BLOCKLIST
 
 
-def test_configuration_versions_are_integer_enums() -> None:
-    assert isinstance(ConfigurationFormatVersion.V1, ConfigurationFormatVersion)
-    assert isinstance(
-        PermutationAlgorithmVersion.FEISTEL_4_ROUND_V1,
-        PermutationAlgorithmVersion,
-    )
-    assert ConfigurationFormatVersion.V1 == 1
-    assert PermutationAlgorithmVersion.FEISTEL_4_ROUND_V1 == 1
+def test_package_version_is_exported() -> None:
+    assert __version__ == version("yurli")
+
+
+@pytest.mark.parametrize(
+    ("package_type", "module_type"),
+    [
+        (IntegerWidth, types.IntegerWidth),
+        (RoundKeys, types.RoundKeys),
+    ],
+)
+def test_public_types_are_reexported(
+    package_type: object,
+    module_type: object,
+) -> None:
+    assert package_type is module_type
 
 
 def test_constructor_is_a_stub() -> None:

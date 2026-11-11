@@ -1,8 +1,8 @@
 Coverage.py
 Dependabot('s)?
 Feistel
-L_i
 K_i
+L_i
 R_i
 SPN
 Sqids

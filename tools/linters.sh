@@ -25,13 +25,12 @@ run_check "basedpyright" uv run basedpyright
 run_check "codespell" uv run codespell --skip=node_modules .
 
 run_vale() {
-  find . \
-    \( -path './.venv' -o -path './.vale' -o -path './node_modules' -o -path './.git' \) -prune \
-    -o -type f \( -name '*.md' -o -name '*.rst' -o -name '*.adoc' -o -name '*.txt' \) -print0 \
+  git ls-files --cached --others --exclude-standard -z -- \
+    '*.md' '*.rst' '*.adoc' '*.txt' ':(exclude).vale/**' \
     | xargs -0 vale --minAlertLevel=error --output=line
 }
 
-run_check "Vale (errors only, excluding .venv)" run_vale
+run_check "Vale (errors only, gitignore-aware)" run_vale
 
 if [ -n "$failed_checks" ]; then
   printf '\nFailed checks: %s\n' "$failed_checks"

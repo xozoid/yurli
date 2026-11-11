@@ -2,7 +2,7 @@
 
 Template-Source: `xozoid/python-template`
 
-Template-Revision: `c9a5cf91408da939219746d426f7ad92fc49ec5f`
+Template-Revision: `02ed1827fa4273eb8b39b27149d2dea785943c4a`
 
 The revision is the full upstream template commit last fully applied to this project. It
 is not a commit from the target repository. Adoption sets the initial revision to the
