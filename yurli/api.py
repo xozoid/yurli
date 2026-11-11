@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from enum import IntEnum
-from typing import Literal, Self, TypedDict, Unpack
+from typing import TYPE_CHECKING, Self, TypedDict, Unpack
+
+if TYPE_CHECKING:
+    from yurli._impl.permutation import IntegerWidth, RoundKeys
 
 EXAMPLE_BLOCKLIST: set[str] = set()
 
@@ -25,8 +28,8 @@ class YurliConfig(TypedDict, total=False):
 
     format_version: ConfigurationFormatVersion
     algorithm_version: PermutationAlgorithmVersion
-    bits: Literal[16, 32, 64]
-    round_keys: tuple[int, int, int, int]
+    bits: IntegerWidth
+    round_keys: RoundKeys
     blocklist: set[str]
     fallback_prefix: str
     identifier_length: int

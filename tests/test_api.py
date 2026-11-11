@@ -1,15 +1,24 @@
+from __future__ import annotations
+
+from importlib.metadata import version
+
 import pytest
 
 from yurli import (
     EXAMPLE_BLOCKLIST,
     ConfigurationFormatVersion,
     PermutationAlgorithmVersion,
+    __version__,
 )
 from yurli.api import Yurli
 
 
 def test_example_blocklist_is_empty() -> None:
     assert set() == EXAMPLE_BLOCKLIST
+
+
+def test_package_version_is_exported() -> None:
+    assert __version__ == version("yurli")
 
 
 def test_configuration_versions_are_integer_enums() -> None:

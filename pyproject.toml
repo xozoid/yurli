@@ -83,6 +83,9 @@ select = ["ALL"]
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
+
 [tool.ruff.lint.per-file-ignores]
 "!**/conftest.py" = ["pytest-fixture-autouse"]
 "tests/**/*.py" = [
@@ -108,6 +111,9 @@ convention = "google"
 [tool.hatch.version]
 source = "vcs"
 fallback-version = "0.1.0"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "yurli/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["yurli"]
