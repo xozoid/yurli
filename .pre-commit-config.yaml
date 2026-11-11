@@ -44,12 +44,12 @@ repos:
       - id: debug-statements
       - id: detect-private-key
       - id: end-of-file-fixer
-      - id: mixed-line-ending
-        args: [--fix=lf]
-      - id: trailing-whitespace
       - id: file-contents-sorter
         files: ^.vale/
         args: [--unique]
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: trailing-whitespace
 
   - repo: https://github.com/tsvikas/sync-with-uv
     rev: v0.6.0
@@ -58,13 +58,19 @@ repos:
 
   - repo: local
     hooks:
-      - id: vale
-        name: vale
-        entry: vale
-        language: system
-        files: \.(md|rst|txt|adoc)$
       - id: prettier
         name: prettier
         entry: npm exec --no -- prettier --write
         language: system
         files: \.(md|json|yaml|yml)$
+      - id: uv-lock-check
+        name: uv lock --check
+        entry: uv lock --check
+        language: system
+        files: ^(pyproject\.toml|uv\.lock)$
+        pass_filenames: false
+      - id: vale
+        name: vale
+        entry: vale
+        language: system
+        files: \.(md|rst|txt|adoc)$

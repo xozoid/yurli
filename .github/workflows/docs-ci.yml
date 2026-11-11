@@ -3,8 +3,12 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - README.md
-      - CONTRIBUTING.md
+      - "**.md"
+      - "**.rst"
+      - "**.adoc"
+      - "**.txt"
+      - .vale.ini
+      - .github/workflows/docs-ci.yml
 permissions:
   contents: read
 jobs:
@@ -31,4 +35,7 @@ jobs:
             sleep "$((attempt * 5))"
           done
       - name: Lint documentation
-        run: vale README.md CONTRIBUTING.md
+        run: |
+          git ls-files --cached --others --exclude-standard -z -- \
+            '*.md' '*.rst' '*.adoc' '*.txt' ':(exclude).vale/**' \
+            | xargs -0 vale --minAlertLevel=error --output=line
