@@ -59,9 +59,10 @@ Dependabot's weekly uv updates cover exact-pinned development dependencies. Its
 resolves and records the update in `uv.lock`. CI runs `sync-with-uv` on every pull
 request, including Dependabot pull requests. It installs the `prek` group, runs the
 hook, and fails if the hook would modify tracked files. If an update changes a tool
-revision represented in `prek.toml`, run `uv run prek run --all-files sync-with-uv` and
-commit the generated change with the lockfile update. Dependabot doesn't provide an
-arbitrary post-update script in `dependabot.yml`; its
+revision represented in `.pre-commit-config.yaml`, run
+`uv run prek run --all-files sync-with-uv` and commit the generated change with the
+lockfile update. Dependabot doesn't provide an arbitrary post-update script in
+`dependabot.yml`; its
 [options reference](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference)
 documents the supported update behavior.
 
