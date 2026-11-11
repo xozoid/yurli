@@ -2,7 +2,16 @@
 
 [![CI][ci-badge]][ci] [![PyPI][pypi-badge]][pypi]
 
-yurli is a Python package.
+**Cute URLs for ugly IDs.**
+
+yurli (/ˈjɝ.li/, “YUR-lee”) is a Python library for reversible, fixed-length, URL-safe
+integer identifiers. It provides obfuscation, not encryption or authorization.
+
+The architecture and mathematical design are documented in
+[`docs/architecture.md`](docs/architecture.md). The first design PR exposes the planned
+public API as stubs; its methods raise `NotImplementedError` until later implementation
+PRs. `EXAMPLE_BLOCKLIST` is public and empty by default; applications provide and
+maintain their own blocklist.
 
 ## Development setup
 
