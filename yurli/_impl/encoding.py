@@ -14,7 +14,7 @@ _MINIMUM_ALPHABET_LENGTH = 2
 _SUPPORTED_BITS = (16, 32, 64)
 
 
-class Base62Encoder:
+class AlphabetEncoder:
     """Encode one configured unsigned integer domain with a fixed alphabet.
 
     The encoder uses a fixed length so every value has precisely one emitted
@@ -47,7 +47,7 @@ class Base62Encoder:
             raise ValueError(msg)
 
         self._alphabet = alphabet
-        self._alphabet_base = len(alphabet)
+        self._base = len(alphabet)
         self._bits: IntegerWidth = bits
         self._digits = {character: index for index, character in enumerate(alphabet)}
         self._max_value = 1 << bits
@@ -65,7 +65,7 @@ class Base62Encoder:
     @cached_property
     def length(self) -> int:
         """Canonical emitted length for this configured domain."""
-        return math.ceil(self._bits / math.log2(self._alphabet_base))
+        return math.ceil(self._bits / math.log2(self._base))
 
     def encode(self, value: int, /) -> str:
         """Encode a domain value as a fixed-width canonical string.
@@ -77,7 +77,7 @@ class Base62Encoder:
         digits = [self._alphabet[0]] * self.length
 
         for index in range(self.length - 1, -1, -1):
-            value, digit = divmod(value, self._alphabet_base)
+            value, digit = divmod(value, self._base)
             digits[index] = self._alphabet[digit]
 
         return "".join(digits)
@@ -102,7 +102,7 @@ class Base62Encoder:
             except KeyError as error:
                 msg = "identifier contains a character outside the alphabet"
                 raise ValueError(msg) from error
-            value = (value * self._alphabet_base) + digit
+            value = (value * self._base) + digit
 
         self._validate_value(value)
         return value
