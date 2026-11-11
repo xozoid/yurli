@@ -22,29 +22,37 @@ string representation to use.
 
 ## Integer permutation
 
-For a configured width `b` in `{16, 32, 64}`, define
+For a configured width $b$ in $\{16, 32, 64\}$, define
 
-\[ X_b = \{0, 1, \ldots, 2^b - 1\}. \]
+$$
+X_b = \{0, 1, \ldots, 2^b - 1\}.
+$$
 
-The permutation `P_b` maps `X_b` to itself. Inputs below zero or at least `2^b` are
+The permutation $P_b$ maps $X_b$ to itself. Inputs below zero or at least $2^b$ are
 rejected; the implementation never wraps or truncates them.
 
 The proposed implementation is a four-round balanced Feistel network. Each supported
-width is even, so split a value into `b/2`-bit halves `L_0` and `R_0`. For round key
-`K_i` and a fixed, documented 64-bit mixing function `F`, compute:
+width is even, so split a value into $b/2$-bit halves $L_0$ and $R_0$. For round key
+$K_i$ and a fixed, documented 64-bit mixing function $F$, compute:
 
-\[ L_{i+1} = R_i, \qquad R_{i+1} = L_i \oplus (F(R_i, K_i) \bmod 2^{b/2}). \]
+$$
+L_{i+1} = R_i, \qquad R_{i+1} = L_i \oplus (F(R_i, K_i) \bmod 2^{b/2}).
+$$
 
 The inverse round is:
 
-\[ R_i = L_{i+1}, \qquad L_i = R_{i+1} \oplus (F(L_{i+1}, K_i) \bmod 2^{b/2}). \]
+$$
+R_i = L_{i+1}, \qquad L_i = R_{i+1} \oplus (F(L_{i+1}, K_i) \bmod 2^{b/2}).
+$$
 
 Decode applies the rounds in reverse key order. The round function doesn't need to be
 invertible. Each Feistel round is invertible because its output contains the prior right
 half and applies exclusive OR with a deterministic function of that half to the other
-half. Thus, for every valid input `x`:
+half. Thus, for every valid input $x$:
 
-\[ P_b^{-1}(P_b(x)) = x. \]
+$$
+P_b^{-1}(P_b(x)) = x.
+$$
 
 Generate four independent round keys with Python's `secrets` module. This randomness
 chooses an instance's mapping; it doesn't make yurli secure. The 16-, 32-, and 64-bit
@@ -60,14 +68,14 @@ The normal alphabet is:
 ```
 
 Encode the permuted integer as Base62 and left-pad with `0` to the configured codec
-identifier length `L`. This gives each value one canonical normal representation. Unlike
+identifier length $L$. This gives each value one canonical normal representation. Unlike
 variable-width encoding, the length doesn't disclose the input's magnitude within a
 codec. Fixed width doesn't provide security.
 
 With no blocklist exclusions and no fallback prefix, Base62 needs at least 3, 6, and 11
 characters for the 16-, 32-, and 64-bit domains. The fallback namespace consumes one
 non-Base62 prefix character, so the initial total lengths must be at least 4, 7, and 12
-characters respectively. A blocklist may require a longer `L`.
+characters respectively. A blocklist may require a longer $L$.
 
 ## Blocklist and fallback namespace
 
@@ -90,31 +98,31 @@ Base62-leading string to normal decoding and a non-Base62-leading string to fall
 decoding. The fallback matcher checks the entire prefix and suffix together, including
 substrings that span their boundary.
 
-For a fixed prefix `p` and length `L`, let `A_L` be the lexicographically ordered set of
-strings `p + s`, where `s` is a Base62 string of length `L - 1` and the complete string
+For a fixed prefix $p$ and length $L$, let $A_L$ be the lexicographically ordered set of
+strings $p + s$, where $s$ is a Base62 string of length $L - 1$ and the complete string
 contains no configured blocked substring. A finite-state substring automaton plus
-dynamic programming counts `A_L` and supports ranking and unranking its strings. Choose
-the shortest length and first configured prefix for which `|A_L| >= 2^b`. Reject a
+dynamic programming counts $A_L$ and supports ranking and unranking its strings. Choose
+the shortest length and first configured prefix for which $|A_L| \ge 2^b$. Reject a
 configuration if no supported prefix and length has sufficient capacity.
 
 When the normal Base62 identifier is blocklisted, use the permuted integer as a rank in
-`A_L` and emit that fallback string. Both namespaces have exactly length `L` and are
+$A_L$ and emit that fallback string. Both namespaces have exactly length $L$ and are
 disjoint: normal identifiers contain only Base62 characters, while fallback strings
 begin with a character outside Base62. Within each namespace, fixed-width Base62 or
 rank/unrank gives a unique representation. Decoding therefore recovers the permuted
-integer and applies `P_b^{-1}`. The fallback is deterministic, collision-free, and
+integer and applies $P_b^{-1}$. The fallback is deterministic, collision-free, and
 terminates because configuration construction proves that the finite fallback set has at
-least `2^b` entries.
+least $2^b$ entries.
 
 The automaton stores substring state, not an identifier-to-ID lookup table. Precompute
 completion counts by remaining length and automaton state. Encoding and decoding cost
-depend on the number of automaton states, alphabet size, and `L`; fallback rank and
+depend on the number of automaton states, alphabet size, and $L$; fallback rank and
 unrank are slower than ordinary base conversion. Normal identifiers only need a
 blocklist scan before emission.
 
 If a custom blocklist leaves too few allowed strings for the chosen width, codec
-construction fails clearly. No algorithm can produce `2^b` distinct allowed IDs when the
-configured output language has fewer than `2^b` allowed strings.
+construction fails clearly. No algorithm can produce $2^b$ distinct allowed IDs when the
+configured output language has fewer than $2^b$ allowed strings.
 
 ## Blocklist strategy comparison
 
@@ -122,7 +130,7 @@ configured output language has fewer than `2^b` allowed strings.
 | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | Reduced alphabet            | Makes blocked substrings impossible only if every forbidden entry is made unrepresentable. Removing characters can shrink capacity and increase all identifier lengths.                      | Simple matching and decoding; custom lists can remove too much of the alphabet.                                            | Reject as the primary strategy because it wastes capacity and doesn't handle every custom list well. |
 | Normal Base62 plus fallback | Normal IDs stay compact. Fallback IDs use a separate prefix namespace with enough allowed strings at the same configured total length. The namespaces are disjoint by their first character. | Normal path is ordinary Base62 plus a match check. Fallback needs automaton counts and rank/unrank.                        | Recommend. It keeps the common path simple while proving uniqueness, safety, and termination.        |
-| Rank/unrank every ID        | Maps every integer directly into the allowed-string set. A fixed length with at least `2^b` allowed strings gives a direct injectivity proof.                                                | Automaton counting and rank/unrank are used for every encode and decode; all IDs pay the larger constrained-language cost. | Keep as a correctness comparison, not a selectable runtime profile.                                  |
+| Rank/unrank every ID        | Maps every integer directly into the allowed-string set. A fixed length with at least $2^b$ allowed strings gives a direct injectivity proof.                                                | Automaton counting and rank/unrank are used for every encode and decode; all IDs pay the larger constrained-language cost. | Keep as a correctness comparison, not a selectable runtime profile.                                  |
 
 The recommended fallback strategy improves on an unmarked retry or prefix convention:
 the prefix is outside the normal alphabet, and its complete output is checked by the
