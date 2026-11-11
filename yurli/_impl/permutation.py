@@ -103,7 +103,7 @@ class IntegerPermutation:
         return (left << self._bits_half) | right
 
     def _validate_value(self, value: int) -> None:
-        if not 0 <= value <= self._max_value:
+        if not 0 <= value < self._max_value:
             msg = f"value must be an integer in the unsigned {self._bits}-bit domain"
             raise ValueError(msg)
 

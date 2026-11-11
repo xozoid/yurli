@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling>=1.33.0", "hatch-vcs>=0.5"]
+requires = ["hatch-vcs>=0.5", "hatchling>=1.33.0"]
 
 [project]
 classifiers = [
@@ -14,26 +14,16 @@ classifiers = [
 ]
 dependencies = []
 description = "Cute URLs for ugly IDs. A fast, stateless, reversible, profanity-free integer obfuscation library for Python."
-keywords = ["yurli", "python"]
+dynamic = ["version"]
+keywords = ["python", "yurli"]
 license = "MIT"
 license-files = ["LICENSE"]
 name = "yurli"
 readme = "README.md"
 requires-python = ">=3.12"
-dynamic = ["version"]
 
 [dependency-groups]
-lint = ["ruff==0.17.4"]
-spell = ["codespell==2.4.3"]
-test = ["pytest==9.2.0"]
 coverage = ["coverage[toml]==7.17.2", { include-group = "test" }]
-types = ["basedpyright==1.40.2", { include-group = "test" }]
-prek = ["prek==0.5.10"]
-format = [
-  "taplo==0.9.3",
-  { include-group = "lint" },
-  { include-group = "prek" },
-]
 dev = [
   "build==1.6.1",
   { include-group = "coverage" },
@@ -42,13 +32,33 @@ dev = [
   { include-group = "spell" },
   { include-group = "types" },
 ]
+format = [
+  "taplo==0.9.3",
+  { include-group = "lint" },
+  { include-group = "prek" },
+]
+lint = ["ruff==0.17.4"]
+prek = ["prek==0.5.10"]
+spell = ["codespell==2.4.3"]
+test = ["pytest==9.2.0"]
+types = ["basedpyright==1.40.2", { include-group = "test" }]
 
 [tool.basedpyright]
-include = ["yurli", "tests"]
+include = ["tests", "yurli"]
 pythonVersion = "3.12"
 typeCheckingMode = "strict"
 venv = ".venv"
 venvPath = "."
+
+reportUnknownArgumentType = "warning"
+reportUnknownLambdaType = "warning"
+reportUnknownMemberType = "warning"
+reportUnknownParameterType = "warning"
+reportUnknownVariableType = "warning"
+reportUnnecessaryTypeIgnoreComment = "warning"
+
+# Checked by ruff
+reportPrivateUsage = "none"
 
 [tool.coverage.report]
 fail_under = 85
@@ -63,7 +73,7 @@ source = ["yurli"]
 "https://github.com/DetachHead/basedpyright-prek-mirror" = "basedpyright"
 
 [tool.pytest.ini_options]
-addopts = ["--import-mode=importlib"]
+addopts = ["--durations=10", "--import-mode=importlib"]
 testpaths = ["tests"]
 
 [tool.ruff]
@@ -74,7 +84,6 @@ target-version = "py312"
 ignore = [
   "incorrect-blank-line-before-class",
   "missing-copyright-notice",
-  "missing-trailing-comma",            # ruff format adds trailing commas
   "undocumented-public-package",
 ]
 preview = true
@@ -109,8 +118,8 @@ required-imports = ["from __future__ import annotations"]
 ]
 
 [tool.hatch.version]
-source = "vcs"
 fallback-version = "0.1.0"
+source = "vcs"
 
 [tool.hatch.build.hooks.vcs]
 version-file = "yurli/_version.py"
