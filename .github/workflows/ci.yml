@@ -88,7 +88,7 @@ jobs:
       - run: uv run --no-sync ruff format --check .
       - run: npm exec --no -- prettier --check .
       - run: uv run --no-sync taplo fmt --check '*.toml'
-      - run: uv run --no-sync prek run yamlfmt --all-files
+      - run: uv run --no-sync prek run file-contents-sorter --all-files
   sync-with-uv:
     runs-on: ubuntu-latest
     steps:

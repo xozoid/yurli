@@ -19,11 +19,6 @@ repo = "https://github.com/DetachHead/basedpyright-prek-mirror"
 rev = "1.40.2"
 
 [[repos]]
-hooks = [{ id = "yamlfmt" }]
-repo = "https://github.com/google/yamlfmt"
-rev = "v0.21.0"
-
-[[repos]]
 hooks = [
   { id = "check-added-large-files" },
   { id = "check-ast" },
@@ -46,6 +41,15 @@ hooks = [
 ]
 repo = "https://github.com/pre-commit/pre-commit-hooks"
 rev = "v6.0.0"
+
+[[repos]]
+repo = "https://github.com/pre-commit/pre-commit-hooks"
+rev = "v6.0.0"
+
+[[repos.hooks]]
+args = ["--unique"]
+files = "^.vale/"
+id = "file-contents-sorter"
 
 [[repos]]
 hooks = [{ id = "sync-with-uv" }]
