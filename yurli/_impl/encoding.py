@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import math
-from functools import cached_property
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -26,12 +25,15 @@ class AlphabetEncoder:
         self,
         bits: IntegerWidth,
         alphabet: str = DEFAULT_ALPHABET,
+        length: int | None = None,
     ) -> None:
         """Create an encoder for a width and alphabet.
 
         Args:
             bits: Width of the unsigned integer domain to encode.
             alphabet: Ordered digits used for the positional representation.
+            length: Optional emitted length. It must be large enough to encode
+                the complete configured domain.
 
         Raises:
             ValueError: If the width or alphabet is invalid.
@@ -49,8 +51,14 @@ class AlphabetEncoder:
         self._alphabet = alphabet
         self._base = len(alphabet)
         self._bits: IntegerWidth = bits
+        minimum_length = math.ceil(bits / math.log2(self._base))
+        if length is not None and length < minimum_length:
+            msg = f"length must be at least {minimum_length} for the configured domain"
+            raise ValueError(msg)
+
         self._digits = {character: index for index, character in enumerate(alphabet)}
         self._max_value = 1 << bits
+        self._length = length or minimum_length
 
     @property
     def alphabet(self) -> str:
@@ -62,10 +70,10 @@ class AlphabetEncoder:
         """Configured unsigned integer width."""
         return self._bits
 
-    @cached_property
+    @property
     def length(self) -> int:
         """Canonical emitted length for this configured domain."""
-        return math.ceil(self._bits / math.log2(self._base))
+        return self._length
 
     def encode(self, value: int, /) -> str:
         """Encode a domain value as a fixed-width canonical string.
