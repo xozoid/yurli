@@ -10,8 +10,10 @@ integer identifiers. It provides obfuscation, not encryption or authorization.
 The architecture and mathematical design are documented in
 [`docs/architecture.md`](docs/architecture.md). The first design PR exposes the planned
 public API as stubs; its methods raise `NotImplementedError` until later implementation
-PRs. `EXAMPLE_BLOCKLIST` is public and empty by default; applications provide and
-maintain their own blocklist.
+PRs. The sorted, line-delimited example blocklist lives in
+[`yurli/blocklist.txt`](yurli/blocklist.txt). It's derived from Sqids data; see
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for its attribution and license.
+Applications choose and maintain the blocklist policy appropriate for their identifiers.
 
 ## Development setup
 

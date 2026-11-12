@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from yurli._version import __version__
 from yurli.api import (
-    EXAMPLE_BLOCKLIST,
     ConfigurationFormatVersion,
     PermutationAlgorithmVersion,
     Yurli,
     YurliConfig,
 )
+from yurli.constants import EXAMPLE_BLOCKLIST
 from yurli.types import IntegerWidth, RoundKeys
 
 __all__ = [

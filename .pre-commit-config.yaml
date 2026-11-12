@@ -13,6 +13,9 @@ repos:
     hooks:
       - id: codespell
         additional_dependencies: [tomli]
+        exclude_types:
+          - text
+        exclude: ^yurli/blocklist\.txt$
 
       - id: codespell
         name: codespell-commit-msg
@@ -48,7 +51,7 @@ repos:
       - id: detect-private-key
       - id: end-of-file-fixer
       - id: file-contents-sorter
-        files: ^.vale/
+        files: \.(txt)$
         args: [--unique]
       - id: mixed-line-ending
         args: [--fix=lf]
@@ -76,4 +79,4 @@ repos:
         name: vale
         entry: vale
         language: system
-        files: \.(md|rst|txt|adoc)$
+        files: \.(md|adoc)$

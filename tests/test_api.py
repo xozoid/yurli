@@ -12,10 +12,12 @@ from yurli import (
     types,
 )
 from yurli.api import Yurli
+from yurli.constants import EXAMPLE_BLOCKLIST as CONSTANT_BLOCKLIST
 
 
-def test_example_blocklist_is_empty() -> None:
-    assert set() == EXAMPLE_BLOCKLIST
+def test_example_blocklist_is_publicly_exported() -> None:
+    assert EXAMPLE_BLOCKLIST == CONSTANT_BLOCKLIST
+    assert EXAMPLE_BLOCKLIST
 
 
 def test_package_version_is_exported() -> None:
