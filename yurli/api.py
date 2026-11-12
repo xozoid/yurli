@@ -29,7 +29,6 @@ class YurliConfig(TypedDict, total=False):
     bits: IntegerWidth
     round_keys: RoundKeys
     blocklist: set[str]
-    fallback_prefix: str
     identifier_length: int
 
 

@@ -42,12 +42,7 @@ class AlphabetEncoder:
         if bits not in _SUPPORTED_BITS:
             msg = "bits must be one of 16, 32, or 64"
             raise ValueError(msg)
-        if len(alphabet) < _MINIMUM_ALPHABET_LENGTH:
-            msg = "alphabet must contain at least two characters"
-            raise ValueError(msg)
-        if len(set(alphabet)) != len(alphabet):
-            msg = "alphabet must not contain duplicate characters"
-            raise ValueError(msg)
+        self._validate_alphabet(alphabet)
 
         self._alphabet = alphabet
         self._base = len(alphabet)
@@ -60,6 +55,23 @@ class AlphabetEncoder:
         self._digits = {c: i for i, c in enumerate(alphabet)}
         self._max_value = 1 << bits
         self._length = length or minimum_length
+
+    @staticmethod
+    def _validate_alphabet(alphabet: str) -> None:
+        """Validate an ordered ASCII alphabet before any reduction.
+
+        Raises:
+            ValueError: If the alphabet is non-ASCII, too short, or duplicated.
+        """
+        if not alphabet.isascii():
+            msg = "alphabet must contain only ASCII characters"
+            raise ValueError(msg)
+        if len(alphabet) < _MINIMUM_ALPHABET_LENGTH:
+            msg = "alphabet must contain at least two characters"
+            raise ValueError(msg)
+        if len(set(alphabet)) != len(alphabet):
+            msg = "alphabet must not contain duplicate characters"
+            raise ValueError(msg)
 
     @classmethod
     def _required_length(cls, bits: IntegerWidth, base: int) -> int:

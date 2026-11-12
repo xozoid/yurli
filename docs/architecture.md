@@ -67,9 +67,10 @@ and performs ordinary positional accumulation. This creates one canonical repres
 for every value in the configured domain.
 
 With the default Base62 alphabet, the 16-, 32-, and 64-bit domains need at least 3, 6,
-and 11 characters respectively. A custom alphabet must have at least two unique
-characters. A smaller alphabet can require a larger $L$, and an explicitly supplied
-length shorter than the minimum is rejected.
+and 11 characters respectively. A custom alphabet must contain only ASCII characters and
+at least two unique characters. Uppercase and lowercase characters remain distinct
+digits. A smaller alphabet can require a larger $L$, and an explicitly supplied length
+shorter than the minimum is rejected.
 
 Fixed width avoids disclosing a coarse input magnitude through identifier length. It
 doesn't provide security.
@@ -85,30 +86,31 @@ derived from
 [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) retains its attribution and MIT
 License.
 
-`BlocklistEncoder` requires at least one non-empty entry. An empty iterable or an
-iterable containing only empty entries raises `ValueError`. Applications choose and
-maintain their own blocklist policy.
+`BlocklistEncoder` requires at least one non-empty ASCII entry. An empty iterable or any
+iterable containing an empty entry raises `ValueError`. Applications choose and maintain
+their own blocklist policy.
 
-Entries are normalized with `str.casefold()` and deduplicated. An entry longer than the
-selected identifier length remains in the `blocklist` property for reporting, but can't
-occur in output. Empty entries are invalid because every string contains the empty
-string.
+Entries are normalized with `str.lower()` and deduplicated. Matching is ASCII
+case-insensitive. An entry longer than the selected identifier length can't occur in
+output. Empty entries are invalid because every string contains the empty string.
 
 To make a relevant blocked word impossible, at least one distinct character in that word
 must be absent from the output alphabet. Starting with the candidate alphabet,
 `BlocklistEncoder` repeatedly:
 
-1. Computes the minimum fixed length from the domain width and current alphabet size.
-2. Finds blocked words no longer than that length whose distinct `casefold()` characters
-   are all available.
+1. Computes the greater of the configured length and the minimum fixed length from the
+   domain width and current alphabet size.
+2. Finds blocked words no longer than that effective length whose distinct lowercase
+   characters are all available.
 3. Counts character occurrences across those spellable words.
 4. Removes the character with the highest count. A tie removes the lexicographically
-   greatest `casefold()` character.
+   greatest lowercase character.
 
-Character removal is case-insensitive, so removing `a` also removes `A` when both occur
-in the alphabet. Surviving characters retain their original order. The greedy algorithm
-ends when no relevant blocked word is spellable. It guarantees output can't contain a
-blocked substring, but doesn't claim to produce a globally largest safe alphabet.
+Character-group removal is case-insensitive, so removing `a` also removes `A` when both
+occur in the alphabet. Surviving characters retain their original case and order. The
+greedy algorithm ends when no relevant blocked word is spellable. It guarantees output
+can't contain a blocked substring, but doesn't guarantee a globally largest safe
+alphabet.
 
 The resulting alphabet is passed to `AlphabetEncoder` unchanged. Encoding and decoding
 therefore remain ordinary fixed-width positional conversion: there is no identifier

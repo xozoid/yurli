@@ -20,8 +20,7 @@ class BlocklistEncoder(AlphabetEncoder):
     The encoder removes alphabet characters until every relevant blocked word
     requires at least one unavailable character. It then uses
     :class:`~yurli._impl.encoding.AlphabetEncoder` unchanged. Consequently,
-    every emitted identifier is blocklist-safe without a separate fallback
-    representation.
+    every emitted identifier is blocklist-safe without a fallback namespace.
 
     Alphabet reduction can increase the fixed identifier length. A blocklist
     that leaves fewer than two characters cannot encode the configured domain.
@@ -43,25 +42,59 @@ class BlocklistEncoder(AlphabetEncoder):
                 identifiers must not contain.
             alphabet: Ordered candidate digits to reduce and then use for
                 positional encoding.
-            length: Optional fixed ID length.
+            length: Optional fixed ID length. Pruning can increase it when the
+                reduced alphabet needs more characters for the domain.
 
         Raises:
-            ValueError: If no non-empty blocked substring is supplied, or
-                alphabet reduction or the parent encoder rejects the settings.
+            ValueError: If the explicitly supplied length is too short for the
+                original alphabet.
         """
-        blocklist = {word.casefold() for word in blocklist if word}
-        if not blocklist:
-            msg = "blocklist required or something"
+        self._validate_alphabet(alphabet)
+        minimum_length = self._required_length(bits, len(alphabet))
+        if length is not None and length < minimum_length:
+            msg = f"length must be at least {minimum_length} for the configured domain"
             raise ValueError(msg)
+        normalized_blocklist = self._normalize_blocklist(blocklist)
+        reduced_alphabet = self._prune_alphabet(
+            bits,
+            normalized_blocklist,
+            alphabet,
+            length,
+        )
+        effective_length = max(
+            length or 0,
+            self._required_length(bits, len(reduced_alphabet)),
+        )
         super().__init__(
             bits,
-            self._prune_alphabet(bits, blocklist, alphabet),
-            length=length,
+            reduced_alphabet,
+            length=effective_length,
         )
-        # Remove ones too long anyways
         self._blocklist = frozenset(
-            word for word in blocklist if len(word) <= self._length
+            word for word in normalized_blocklist if len(word) <= self._length
         )
+
+    @staticmethod
+    def _normalize_blocklist(blocklist: Iterable[str]) -> set[str]:
+        """Return non-empty ASCII entries normalized for matching.
+
+        Raises:
+            ValueError: If an entry is empty or non-ASCII, or no entry is supplied.
+        """
+        normalized_blocklist: set[str] = set()
+        for word in blocklist:
+            if not word:
+                msg = "blocklist must contain at least one non-empty entry"
+                raise ValueError(msg)
+            if not word.isascii():
+                msg = "blocklist entries must contain only ASCII characters"
+                raise ValueError(msg)
+            normalized_blocklist.add(word.lower())
+
+        if not normalized_blocklist:
+            msg = "blocklist must contain at least one non-empty entry"
+            raise ValueError(msg)
+        return normalized_blocklist
 
     @property
     def blocklist(self) -> frozenset[str]:
@@ -74,14 +107,15 @@ class BlocklistEncoder(AlphabetEncoder):
         bits: IntegerWidth,
         blocklist: set[str],
         alphabet: str,
+        length: int | None = None,
     ) -> str:
         """Return an ordered alphabet in which no relevant word is spellable.
 
         Repeatedly remove the case-insensitive character that occurs in the
         greatest number of currently spellable blocked words. Ties use the
-        lexicographically greatest folded character. Words longer than the
-        minimum identifier length of the current alphabet cannot occur and do
-        not affect removal.
+        lexicographically greatest lowercase character. Words longer than the
+        greater of the configured and minimum identifier lengths cannot occur
+        and do not affect removal.
 
         Returns:
             The surviving characters in their original order.
@@ -89,17 +123,20 @@ class BlocklistEncoder(AlphabetEncoder):
         """
 
         def prune(alphabet_set: set[str]) -> set[str]:
-            if len(alphabet_set) <= 1:
+            alphabet_len = len(alphabet_set)
+            if alphabet_len <= 1:
                 msg = "blocklist leaves insufficient alphabet characters"
                 raise ValueError(msg)
 
-            length = cls._required_length(bits, len(alphabet_set))
+            effective_length = max(
+                length or 0,
+                cls._required_length(bits, alphabet_len),
+            )
 
-            alphabet_lower = {c.casefold() for c in alphabet_set}
+            alphabet_lower = {c.lower() for c in alphabet_set}
             counts: dict[str, int] = defaultdict(int)
             for word in blocklist:
-                if len(word) > length:
-                    # Not an issue anyways
+                if len(word) > effective_length:
                     continue
                 word_alphabet = set(word)
                 if word_alphabet <= alphabet_lower:
@@ -110,7 +147,7 @@ class BlocklistEncoder(AlphabetEncoder):
                 return alphabet_set
 
             remove = max(counts, key=lambda c: (counts[c], c))
-            alphabet_set = {c for c in alphabet_set if c.casefold() != remove}
+            alphabet_set = {c for c in alphabet_set if c.lower() != remove}
             return prune(alphabet_set)
 
         reduced_alphabet = prune(set(alphabet))
