@@ -72,10 +72,9 @@ identifier length $L$. This gives each value one canonical normal representation
 variable-width encoding, the length doesn't disclose the input's magnitude within a
 codec. Fixed width doesn't provide security.
 
-With no blocklist exclusions and no fallback prefix, Base62 needs at least 3, 6, and 11
-characters for the 16-, 32-, and 64-bit domains. The fallback namespace consumes one
-non-Base62 prefix character, so the initial total lengths must be at least 4, 7, and 12
-characters respectively. A blocklist may require a longer $L$.
+Base62 needs at least 3, 6, and 11 characters for the 16-, 32-, and 64-bit domains. Each
+length has enough even-parity and odd-parity strings for its corresponding domain, so
+the fallback doesn't require a marker character. A blocklist may require a longer $L$.
 
 ## Blocklist and fallback namespace
 
@@ -92,27 +91,27 @@ entry-length-specific matching rules. Normalize and deduplicate entries as part 
 configuration construction. Empty entries are invalid because every string contains the
 empty string.
 
-The fallback uses a prefix outside Base62, selected from URL-safe candidates such as
-`-`, `_`, and `~`. Store it in the codec configuration. The decoder routes a
-Base62-leading string to normal decoding and a non-Base62-leading string to fallback
-decoding. The fallback matcher checks the entire prefix and suffix together, including
-substrings that span their boundary.
+The normal and fallback namespaces use digit parity instead of a visible prefix. Sum the
+Base62 digit indexes modulo two. Even parity selects normal decoding; odd parity selects
+fallback decoding. Because Base62 has an even number of digits, each fixed length has an
+equal number of even- and odd-parity strings. The configured alphabet must likewise have
+an even number of characters.
 
-For a fixed prefix $p$ and length $L$, let $A_L$ be the lexicographically ordered set of
-strings $p + s$, where $s$ is a Base62 string of length $L - 1$ and the complete string
-contains no configured blocked substring. A finite-state substring automaton plus
-dynamic programming counts $A_L$ and supports ranking and unranking its strings. Choose
-the shortest length and first configured prefix for which $|A_L| \ge 2^b$. Reject a
-configuration if no supported prefix and length has sufficient capacity.
+For length $L$, let $A_L$ be the lexicographically ordered set of Base62 strings with
+odd parity that contain no configured blocked substring. A finite-state substring
+automaton plus dynamic programming counts $A_L$ and supports ranking and unranking its
+strings. Choose the shortest length for which both the unrestricted even-parity language
+and $A_L$ contain at least $2^b$ strings. Reject a configuration without sufficient
+capacity.
 
-When the normal Base62 identifier is blocklisted, use the permuted integer as a rank in
-$A_L$ and emit that fallback string. Both namespaces have exactly length $L$ and are
-disjoint: normal identifiers contain only Base62 characters, while fallback strings
-begin with a character outside Base62. Within each namespace, fixed-width Base62 or
-rank/unrank gives a unique representation. Decoding therefore recovers the permuted
-integer and applies $P_b^{-1}$. The fallback is deterministic, collision-free, and
-terminates because configuration construction proves that the finite fallback set has at
-least $2^b$ entries.
+Normal identifiers use direct mixed-radix encoding: all but the final character use the
+full alphabet, while the final character uses the half alphabet whose digit parity makes
+the complete identifier even. When that normal identifier is blocklisted, the fallback
+ranks the same integer in $A_L$. The namespaces are disjoint because a string has
+exactly one parity. Within each namespace, the mapping gives a unique representation.
+Decoding therefore recovers the permuted integer and applies $P_b^{-1}$. The fallback is
+deterministic, collision-free, and terminates because configuration construction proves
+that $A_L$ has at least $2^b$ entries.
 
 The automaton stores substring state, not an identifier-to-ID lookup table. Precompute
 completion counts by remaining length and automaton state. Encoding and decoding cost
@@ -126,16 +125,15 @@ configured output language has fewer than $2^b$ allowed strings.
 
 ## Blocklist strategy comparison
 
-| Strategy                    | Correctness and length                                                                                                                                                                       | Complexity and decoding                                                                                                    | Decision                                                                                             |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Reduced alphabet            | Makes blocked substrings impossible only if every forbidden entry is made unrepresentable. Removing characters can shrink capacity and increase all identifier lengths.                      | Simple matching and decoding; custom lists can remove too much of the alphabet.                                            | Reject as the primary strategy because it wastes capacity and doesn't handle every custom list well. |
-| Normal Base62 plus fallback | Normal IDs stay compact. Fallback IDs use a separate prefix namespace with enough allowed strings at the same configured total length. The namespaces are disjoint by their first character. | Normal path is ordinary Base62 plus a match check. Fallback needs automaton counts and rank/unrank.                        | Recommend. It keeps the common path simple while proving uniqueness, safety, and termination.        |
-| Rank/unrank every ID        | Maps every integer directly into the allowed-string set. A fixed length with at least $2^b$ allowed strings gives a direct injectivity proof.                                                | Automaton counting and rank/unrank are used for every encode and decode; all IDs pay the larger constrained-language cost. | Keep as a correctness comparison, not a selectable runtime profile.                                  |
+| Strategy                    | Correctness and length                                                                                                                                                                             | Complexity and decoding                                                                                                    | Decision                                                                                             |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Reduced alphabet            | Makes blocked substrings impossible only if every forbidden entry is made unrepresentable. Removing characters can shrink capacity and increase all identifier lengths.                            | Simple matching and decoding; custom lists can remove too much of the alphabet.                                            | Reject as the primary strategy because it wastes capacity and doesn't handle every custom list well. |
+| Normal Base62 plus fallback | Normal and fallback IDs use disjoint parity namespaces within the same alphabet. This avoids a visible marker and preserves the minimum Base62 lengths when each parity class has enough capacity. | Normal IDs use direct mixed-radix encoding. Fallback needs automaton counts and rank/unrank.                               | Recommend. It proves uniqueness, safety, and termination without a marker character.                 |
+| Rank/unrank every ID        | Maps every integer directly into the allowed-string set. A fixed length with at least $2^b$ allowed strings gives a direct injectivity proof.                                                      | Automaton counting and rank/unrank are used for every encode and decode; all IDs pay the larger constrained-language cost. | Keep as a correctness comparison, not a selectable runtime profile.                                  |
 
-The recommended fallback strategy improves on an unmarked retry or prefix convention:
-the prefix is outside the normal alphabet, and its complete output is checked by the
-automaton. This proves namespace separation and blocks unsafe strings across the prefix
-boundary. This method uses no probabilistic retries.
+The recommended fallback strategy improves on an unmarked retry convention: parity makes
+the two namespaces disjoint without adding a marker character. The fallback language is
+checked by the automaton. This method uses no probabilistic retries.
 
 ## Configuration and compatibility
 
@@ -150,7 +148,7 @@ The persisted configuration includes everything that affects identifiers:
 - `ConfigurationFormatVersion` and `PermutationAlgorithmVersion` enum values.
 - Integer width and all four Feistel round keys.
 - The exact normalized blocklist entries and matching policy.
-- The selected fallback prefix and identifier length.
+- The identifier length, alphabet, and parity-namespace rule.
 - The fixed alphabet and matching rules through the algorithm version.
 
 Changing round keys changes every mapping. Changing the blocklist or fallback settings

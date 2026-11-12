@@ -56,7 +56,7 @@ class AlphabetEncoder:
             msg = f"length must be at least {minimum_length} for the configured domain"
             raise ValueError(msg)
 
-        self._digits = {character: index for index, character in enumerate(alphabet)}
+        self._digits = {c: i for i, c in enumerate(alphabet)}
         self._max_value = 1 << bits
         self._length = length or minimum_length
 
@@ -82,13 +82,12 @@ class AlphabetEncoder:
             A string with exactly :attr:`length` characters.
         """
         self._validate_value(value)
-        digits = [self._alphabet[0]] * self.length
 
-        for index in range(self.length - 1, -1, -1):
+        s = ""
+        for _ in range(self._length):
             value, digit = divmod(value, self._base)
-            digits[index] = self._alphabet[digit]
-
-        return "".join(digits)
+            s += self.alphabet[digit]
+        return s
 
     def decode(self, identifier: str, /) -> int:
         """Decode one fixed-width canonical identifier.
@@ -99,12 +98,10 @@ class AlphabetEncoder:
         Raises:
             ValueError: If the identifier is malformed or outside the domain.
         """
-        if len(identifier) != self.length:
-            msg = f"identifier must contain exactly {self.length} characters"
-            raise ValueError(msg)
+        self._validate_identifier(identifier)
 
         value = 0
-        for character in identifier:
+        for character in reversed(identifier):
             try:
                 digit = self._digits[character]
             except KeyError as error:
@@ -116,11 +113,11 @@ class AlphabetEncoder:
         return value
 
     def _validate_value(self, value: int) -> None:
-        """Raise when a value is not an integer in the configured domain.
-
-        Raises:
-            ValueError: If the value is outside the configured domain.
-        """
         if not 0 <= value < self._max_value:
             msg = f"value must be in the unsigned {self._bits}-bit domain"
+            raise ValueError(msg)
+
+    def _validate_identifier(self, identifier: str) -> None:
+        if len(identifier) != self.length:
+            msg = f"identifier must contain exactly {self.length} characters"
             raise ValueError(msg)

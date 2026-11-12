@@ -51,11 +51,11 @@ def test_16_bit_domain_round_trips() -> None:
     ("value", "expected"),
     [
         (0, "000"),
-        (9, "009"),
-        (10, "00A"),
-        (35, "00Z"),
-        (36, "00a"),
-        (61, "00z"),
+        (9, "900"),
+        (10, "A00"),
+        (35, "Z00"),
+        (36, "a00"),
+        (61, "z00"),
         (62, "010"),
     ],
 )
@@ -101,7 +101,7 @@ def test_custom_alphabet_is_used_for_encoding_and_decoding() -> None:
 
     identifier = encoder.encode(i)
 
-    assert identifier == f"{i:016b}"
+    assert identifier == f"{i:016b}"[::-1]
     assert encoder.decode(identifier) == 37
 
 
