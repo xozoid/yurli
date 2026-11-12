@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import TYPE_CHECKING, override
 
-from yurli._impl.encoding import DEFAULT_ALPHABET, AlphabetEncoder
+from yurli._impl.encoding import AlphabetEncoder
+from yurli.constants import DEFAULT_ALPHABET
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -13,11 +15,16 @@ if TYPE_CHECKING:
 
 
 class BlocklistEncoder(AlphabetEncoder):
-    """Encode domain values without configured case-insensitive substrings.
+    """Encode values with an alphabet that excludes blocked substrings.
 
-    Even-parity identifiers form the normal namespace. Odd-parity identifiers
-    form the fallback namespace. Both use only the configured alphabet, so
-    neither namespace needs a visible prefix character.
+    The encoder removes alphabet characters until every relevant blocked word
+    requires at least one unavailable character. It then uses
+    :class:`~yurli._impl.encoding.AlphabetEncoder` unchanged. Consequently,
+    every emitted identifier is blocklist-safe without a separate fallback
+    representation.
+
+    Alphabet reduction can increase the fixed identifier length. A blocklist
+    that leaves fewer than two characters cannot encode the configured domain.
     """
 
     @override
@@ -32,124 +39,79 @@ class BlocklistEncoder(AlphabetEncoder):
 
         Args:
             bits: Width of the unsigned integer domain to encode.
-            blocklist: Case-insensitive substrings that generated IDs forbid.
-            alphabet: Ordered digits used for normal and fallback identifiers.
+            blocklist: Non-empty, case-insensitive substrings that generated
+                identifiers must not contain.
+            alphabet: Ordered candidate digits to reduce and then use for
+                positional encoding.
             length: Optional fixed ID length.
 
         Raises:
-            ValueError: If the alphabet, blocklist, or capacity is invalid.
+            ValueError: If no non-empty blocked substring is supplied, or
+                alphabet reduction or the parent encoder rejects the settings.
         """
-        super().__init__(bits, alphabet, length=length)
-        if self._base % 2:
-            msg = "alphabet must contain an even number of characters"
+        blocklist = {word.casefold() for word in blocklist if word}
+        if not blocklist:
+            msg = "blocklist required or something"
             raise ValueError(msg)
-        self._base_half = self._base // 2
-
-        self._digit_parity: dict[str, int] = {}
-        self._alphabet_reduced: dict[int, str] = {0: "", 1: ""}
-        self._digits_reduced: dict[str, int] = {}
-        for i, c in enumerate(self._alphabet):
-            digit, parity = divmod(i, 2)
-            self._alphabet_reduced[parity] += c
-            self._digits_reduced[c] = digit
-            self._digit_parity[c] = parity
-
-        self._blocklist = self._normalize_blocklist(blocklist)
-
-        if self._blocklist:
-            if length is None:
-                self._length = self._find_identifier_length(self._length)
-            self._validate_capacity()
+        super().__init__(
+            bits,
+            self._prune_alphabet(bits, blocklist, alphabet),
+            length=length,
+        )
+        # Remove ones too long anyways
+        self._blocklist = frozenset(
+            word for word in blocklist if len(word) <= self._length
+        )
 
     @property
     def blocklist(self) -> frozenset[str]:
-        """Normalized forbidden substrings."""
+        """Normalized blocked substrings that fit within an identifier."""
         return self._blocklist
 
-    @override
-    def encode(self, value: int, /) -> str:
-        self._validate_value(value)
-        value_original = value
+    @classmethod
+    def _prune_alphabet(
+        cls,
+        bits: IntegerWidth,
+        blocklist: set[str],
+        alphabet: str,
+    ) -> str:
+        """Return an ordered alphabet in which no relevant word is spellable.
 
-        s = ""
-        parity = 0
-        for _ in range(self._length - 1):
-            value, digit = divmod(value, self._base)
-            s += self.alphabet[digit]
-            parity ^= digit & 1
-        digit = value % self._base_half
-        s += self._alphabet_reduced[parity][digit]
-
-        if self._is_blocked(s):
-            return self._encode_fallback(value_original)
-        return s
-
-    @override
-    def decode(self, identifier: str, /) -> int:
-        self._validate_identifier(identifier)
-        if self._is_blocked(identifier):
-            msg = "identifier contains a blocked substring"
-            raise ValueError(msg)
-
-        # NOTE: Start with the reduced digits, then use full for remaining
-        digits = self._digits_reduced
-        value = 0
-        parity = 0
-        for character in reversed(identifier):
-            try:
-                digit = digits[character]
-            except KeyError as error:
-                msg = "identifier contains a character outside the alphabet"
-                raise ValueError(msg) from error
-            parity ^= self._digit_parity[character]
-            value = (value * self._base) + digit
-            digits = self._digits
-
-        if parity:
-            value = self._decode_fallback(identifier)
-
-        self._validate_value(value)
-        return value
-
-    def _is_blocked(self, identifier: str) -> bool:
-        identifier = identifier.casefold()
-        return any(block in identifier for block in self._blocklist)
-
-    def _find_identifier_length(self, minimum_length: int) -> int:
-        raise NotImplementedError
-
-    def _validate_capacity(self) -> None:
-        """Raise when either parity namespace cannot represent the domain.
-
-        Raises:
-            ValueError: If normal or fallback capacity is insufficient.
-        """
-        raise NotImplementedError
-
-    def _normalize_blocklist(self, blocklist: Iterable[str]) -> frozenset[str]:
-        """Validate, casefold, and remove impossible forbidden substrings.
+        Repeatedly remove the case-insensitive character that occurs in the
+        greatest number of currently spellable blocked words. Ties use the
+        lexicographically greatest folded character. Words longer than the
+        minimum identifier length of the current alphabet cannot occur and do
+        not affect removal.
 
         Returns:
-            Deduplicated forbidden substrings that can appear in an identifier.
+            The surviving characters in their original order.
 
-        Raises:
-            ValueError: If an entry is empty.
         """
-        normalized = frozenset(entry.casefold() for entry in blocklist)
-        if "" in normalized:
-            msg = "blocklist entries must not be empty"
-            raise ValueError(msg)
-        output_characters = frozenset(
-            character.casefold() for character in self.alphabet
-        )
-        return frozenset(
-            entry
-            for entry in normalized
-            if all(character in output_characters for character in entry)
-        )
 
-    def _encode_fallback(self, value: int) -> str:
-        raise NotImplementedError
+        def prune(alphabet_set: set[str]) -> set[str]:
+            if len(alphabet_set) <= 1:
+                msg = "blocklist leaves insufficient alphabet characters"
+                raise ValueError(msg)
 
-    def _decode_fallback(self, identifier: str) -> int:
-        raise NotImplementedError
+            length = cls._required_length(bits, len(alphabet_set))
+
+            alphabet_lower = {c.casefold() for c in alphabet_set}
+            counts: dict[str, int] = defaultdict(int)
+            for word in blocklist:
+                if len(word) > length:
+                    # Not an issue anyways
+                    continue
+                word_alphabet = set(word)
+                if word_alphabet <= alphabet_lower:
+                    for c in word_alphabet:
+                        counts[c] += 1
+
+            if not counts:
+                return alphabet_set
+
+            remove = max(counts, key=lambda c: (counts[c], c))
+            alphabet_set = {c for c in alphabet_set if c.casefold() != remove}
+            return prune(alphabet_set)
+
+        reduced_alphabet = prune(set(alphabet))
+        return "".join(c for c in alphabet if c in reduced_alphabet)

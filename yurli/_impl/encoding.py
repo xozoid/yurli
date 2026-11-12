@@ -5,10 +5,11 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
+from yurli.constants import DEFAULT_ALPHABET
+
 if TYPE_CHECKING:
     from yurli.types import IntegerWidth
 
-DEFAULT_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 _MINIMUM_ALPHABET_LENGTH = 2
 _SUPPORTED_BITS = (16, 32, 64)
 
@@ -51,7 +52,7 @@ class AlphabetEncoder:
         self._alphabet = alphabet
         self._base = len(alphabet)
         self._bits: IntegerWidth = bits
-        minimum_length = math.ceil(bits / math.log2(self._base))
+        minimum_length = self._required_length(bits, self._base)
         if length is not None and length < minimum_length:
             msg = f"length must be at least {minimum_length} for the configured domain"
             raise ValueError(msg)
@@ -59,6 +60,10 @@ class AlphabetEncoder:
         self._digits = {c: i for i, c in enumerate(alphabet)}
         self._max_value = 1 << bits
         self._length = length or minimum_length
+
+    @classmethod
+    def _required_length(cls, bits: IntegerWidth, base: int) -> int:
+        return math.ceil(bits / math.log2(base))
 
     @property
     def alphabet(self) -> str:

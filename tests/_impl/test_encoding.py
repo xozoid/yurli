@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from yurli._impl.encoding import DEFAULT_ALPHABET, AlphabetEncoder
+from yurli._impl.encoding import AlphabetEncoder
+from yurli.constants import DEFAULT_ALPHABET
 
 if TYPE_CHECKING:
     from yurli.types import IntegerWidth
