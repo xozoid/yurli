@@ -11,8 +11,9 @@ The architecture and mathematical design are documented in
 [`docs/architecture.md`](docs/architecture.md). The first design PR exposes the planned
 public API as stubs; its methods raise `NotImplementedError` until later implementation
 PRs. The sorted, line-delimited example blocklist lives in
-[`yurli/blocklist.txt`](yurli/blocklist.txt). Applications choose and maintain the
-blocklist policy appropriate for their identifiers.
+[`yurli/blocklist.txt`](yurli/blocklist.txt). It's derived from Sqids data; see
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for its attribution and license.
+Applications choose and maintain the blocklist policy appropriate for their identifiers.
 
 ## Development setup
 

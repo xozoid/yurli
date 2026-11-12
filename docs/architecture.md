@@ -79,7 +79,11 @@ doesn't provide security.
 The example blocklist is stored in [`yurli/blocklist.txt`](../yurli/blocklist.txt), with
 one entry per line in sorted order. `yurli.constants.EXAMPLE_BLOCKLIST` reads that file
 as UTF-8 and exposes the entries as a set. The file order makes additions and review
-deterministic, but callers must not rely on the iteration order of the set.
+deterministic, but callers must not rely on the iteration order of the set. The list is
+derived from
+[Sqids Python's `constants.py`](https://github.com/sqids/sqids-python/blob/main/sqids/constants.py);
+[`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) retains its attribution and MIT
+License.
 
 `BlocklistEncoder` requires at least one non-empty entry. An empty iterable or an
 iterable containing only empty entries raises `ValueError`. Applications choose and
