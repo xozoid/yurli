@@ -82,7 +82,7 @@ def test_alphabet_reduces(
 @pytest.mark.parametrize(
     ("alphabet", "blocklist", "expected_length"),
     [
-        ("abcdef", {"abc", "abd", "abe"}, 5),
+        ("abcdef", {"abc", "abe", "abf"}, 5),
         ("abcdef", {"abc", "abcd"}, 5),
         ("abcdef", {"abc", "def"}, 4),
         ("abcdef", {"abc", "bcd", "cde"}, 5),

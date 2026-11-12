@@ -106,7 +106,7 @@ jobs:
           python-version: "3.15"
           enable-cache: true
       - run: uv sync --locked --no-default-groups --group spell
-      - run: uv run --no-sync codespell --skip=node_modules .
+      - run: uv run --no-sync codespell --skip=node_modules,./yurli/blocklist.txt .
   coverage:
     runs-on: ubuntu-latest
     steps:

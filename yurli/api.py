@@ -8,8 +8,6 @@ from typing import TYPE_CHECKING, Self, TypedDict, Unpack
 if TYPE_CHECKING:
     from yurli.types import IntegerWidth, RoundKeys
 
-EXAMPLE_BLOCKLIST: set[str] = set()
-
 
 class ConfigurationFormatVersion(IntEnum):
     """Version of the serialized configuration format."""

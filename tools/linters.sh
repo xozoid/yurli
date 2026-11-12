@@ -22,7 +22,7 @@ run_check() {
 
 run_check "Ruff" uv run ruff check .
 run_check "basedpyright" uv run basedpyright
-run_check "codespell" uv run codespell --skip=node_modules .
+run_check "codespell" uv run codespell --skip=node_modules,./yurli/blocklist.txt .
 
 run_vale() {
   git ls-files --cached --others --exclude-standard -z -- \

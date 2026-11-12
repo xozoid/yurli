@@ -15,6 +15,7 @@ repos:
         additional_dependencies: [tomli]
         exclude_types:
           - text
+        exclude: ^yurli/blocklist\.txt$
 
       - id: codespell
         name: codespell-commit-msg
