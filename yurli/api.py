@@ -45,9 +45,6 @@ class Yurli:
     A new instance generates a random permutation configuration unless all
     persisted settings are provided. Save :meth:`to_bytes` and restore it with
     :meth:`from_bytes` to decode identifiers after a process restart.
-
-    Changing any persisted setting changes the mapping. Save :meth:`to_bytes`
-    and restore it with :meth:`from_bytes` to keep existing identifiers valid.
     """
 
     def __init__(  # ruff: ignore[too-many-arguments]

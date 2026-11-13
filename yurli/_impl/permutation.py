@@ -103,7 +103,7 @@ class IntegerPermutation:
     @staticmethod
     def _validate_round_keys(round_keys: RoundKeys) -> None:
         if len(round_keys) != ROUND_COUNT or any(
-            not 0 <= key <= _UINT64_MASK for key in round_keys
+            type(key) is not int or not 0 <= key <= _UINT64_MASK for key in round_keys
         ):
             msg = (
                 f"round_keys must be a tuple of {ROUND_COUNT} unsigned 64-bit integers"
