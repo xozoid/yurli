@@ -104,8 +104,9 @@ class Yurli:
         """
         return self._permutation.invert(self._encoder.decode(identifier))
 
-    def to_kwargs(self) -> YurliConfig:
-        """Return all settings needed to reconstruct this codec with kwargs."""
+    @property
+    def config(self) -> YurliConfig:
+        """Configuration used to construct this codec."""
         return {
             "format_version": ConfigVersion.V1,
             "algorithm_version": PermutationVersion.FEISTEL_4_ROUND_V1,
@@ -122,7 +123,7 @@ class Yurli:
             Deterministic UTF-8 JSON configuration bytes.
         """
         return json.dumps(
-            self.to_kwargs(),
+            self.config,
             ensure_ascii=True,
             separators=(",", ":"),
             sort_keys=True,
@@ -138,73 +139,85 @@ class Yurli:
         Raises:
             ValueError: If the configuration is malformed or unsupported.
         """
+        j = cls._bytes_to_dict(data)
+        if frozenset(j) != YurliConfig.__required_keys__:
+            msg = f"config must be a JSON object with {YurliConfig.__required_keys__}"
+            raise ValueError(msg)
+
+        return cls(
+            bits=cls._validate_bits(j, "bits"),
+            alphabet=cls._validate_str(j, "alphabet"),
+            round_keys=cls._validate_round_keys(j, "round_keys"),
+            identifier_length=cls._validate_int(j, "identifier_length"),
+            format_version=cls._validate_enum(j, "format_version", ConfigVersion),
+            algorithm_version=cls._validate_enum(
+                j,
+                "algorithm_version",
+                PermutationVersion,
+            ),
+        )
+
+    @classmethod
+    def _bytes_to_dict(cls, data: bytes) -> dict[str, object]:
         try:
             decoded = data.decode("utf-8")
         except (AttributeError, UnicodeDecodeError) as error:
             msg = "config must be valid UTF-8"
             raise ValueError(msg) from error
         try:
-            parsed: object = json.loads(decoded)
+            j: dict[str, object] | object = json.loads(decoded)
         except json.JSONDecodeError as error:
             msg = "config must be valid UTF-8 JSON"
             raise ValueError(msg) from error
-
-        return cls(**cls._configuration_from_json(parsed))
-
-    @classmethod
-    def _configuration_from_json(cls, raw: dict[str, object] | object) -> YurliConfig:
-        """Restore a codec from :meth:`to_bytes` output.
-
-        Returns:
-            A codec with the serialized mapping.
-
-        Raises:
-            TypeError: If a config field has an invalid type.
-            ValueError: If the config is malformed or unsupported.
-        """
-        if not isinstance(raw, dict) or frozenset(raw) != YurliConfig.__required_keys__:
+        if not isinstance(j, dict) or not all(isinstance(k, str) for k in j):
             msg = f"config must be a JSON object with {YurliConfig.__required_keys__}"
             raise ValueError(msg)
-
-        j = cast("YurliConfig", raw)
-
-        round_keys = j.pop("round_keys")
-        if not isinstance(round_keys, Sequence) or len(round_keys) != ROUND_COUNT:
-            msg = f"config round_keys must be list of {ROUND_COUNT} integer values"
-            raise ValueError(msg)
-        try:
-            j["round_keys"] = (
-                int(round_keys[0]),
-                int(round_keys[1]),
-                int(round_keys[2]),
-                int(round_keys[3]),
-            )
-        except (TypeError, ValueError) as error:
-            msg = f"config round_keys must be list of {ROUND_COUNT} integer values"
-            raise ValueError(msg) from error
-
-        bits = j["bits"]
-        if bits not in SUPPORTED_BITS:
-            msg = f"config bits must be one of {SUPPORTED_BITS}"
-            raise ValueError(msg)
-
-        try:
-            j["alphabet"] = str(j["alphabet"])
-        except (TypeError, ValueError) as error:
-            msg = "config has invalid alphabet"
-            raise TypeError(msg) from error
-
-        try:
-            j["identifier_length"] = int(j["identifier_length"])
-        except (TypeError, ValueError) as error:
-            msg = "config has invalid identifier length"
-            raise TypeError(msg) from error
-
-        try:
-            j["format_version"] = ConfigVersion(j["format_version"])
-            j["algorithm_version"] = PermutationVersion(j["algorithm_version"])
-        except (TypeError, ValueError) as error:
-            msg = "config has invalid version"
-            raise TypeError(msg) from error
-
         return j
+
+    @staticmethod
+    def _validate_bits(j: dict[str, object], key: str) -> IntegerWidth:
+        value = j[key]
+        if not isinstance(value, int):
+            msg = f"config.{key} must be an integer"
+            raise ValueError(msg)  # ruff: ignore[type-check-without-type-error]
+        if value not in SUPPORTED_BITS:
+            msg = f"config.{key} must be one of {SUPPORTED_BITS}"
+            raise ValueError(msg)
+        return value
+
+    @staticmethod
+    def _validate_str(j: dict[str, object], key: str) -> str:
+        value = j[key]
+        if not isinstance(value, str):
+            msg = f"config.{key} must be a string"
+            raise ValueError(msg)  # ruff: ignore[type-check-without-type-error]
+        return value
+
+    @staticmethod
+    def _validate_round_keys(j: dict[str, object], key: str) -> RoundKeys:
+        value = j[key]
+        if (
+            not isinstance(value, Sequence)
+            or len(value) != ROUND_COUNT
+            or not all(isinstance(v, int) for v in value)
+        ):
+            msg = f"config.{key} must be a list of {ROUND_COUNT} integer values"
+            raise ValueError(msg)
+        return cast("RoundKeys", tuple(value))
+
+    @staticmethod
+    def _validate_int(j: dict[str, object], key: str) -> int:
+        value = j[key]
+        if not isinstance(value, int):
+            msg = f"config.{key} must be an integer"
+            raise ValueError(msg)  # ruff: ignore[type-check-without-type-error]
+        return value
+
+    @staticmethod
+    def _validate_enum[T: IntEnum](j: dict[str, object], key: str, type_: type[T]) -> T:
+        value = Yurli._validate_int(j, key)
+        try:
+            return type_(value)
+        except ValueError as error:
+            msg = f"config.{key} has an unknown version"
+            raise ValueError(msg) from error
