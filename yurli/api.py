@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Sequence
 from enum import IntEnum
-from typing import TYPE_CHECKING, Self, TypedDict, cast
+from typing import TYPE_CHECKING, Self, TypedDict
 
 from yurli._impl.encoding import AlphabetEncoder
 from yurli._impl.permutation import IntegerPermutation
@@ -157,8 +156,8 @@ class Yurli:
             ),
         )
 
-    @classmethod
-    def _bytes_to_dict(cls, data: bytes) -> dict[str, object]:
+    @staticmethod
+    def _bytes_to_dict(data: bytes) -> dict[str, object]:
         try:
             decoded = data.decode("utf-8")
         except (AttributeError, UnicodeDecodeError) as error:
@@ -175,17 +174,6 @@ class Yurli:
         return j
 
     @staticmethod
-    def _validate_bits(j: dict[str, object], key: str) -> IntegerWidth:
-        value = j[key]
-        if not isinstance(value, int):
-            msg = f"config.{key} must be an integer"
-            raise ValueError(msg)  # ruff: ignore[type-check-without-type-error]
-        if value not in SUPPORTED_BITS:
-            msg = f"config.{key} must be one of {SUPPORTED_BITS}"
-            raise ValueError(msg)
-        return value
-
-    @staticmethod
     def _validate_str(j: dict[str, object], key: str) -> str:
         value = j[key]
         if not isinstance(value, str):
@@ -197,20 +185,28 @@ class Yurli:
     def _validate_round_keys(j: dict[str, object], key: str) -> RoundKeys:
         value = j[key]
         if (
-            not isinstance(value, Sequence)
+            not isinstance(value, list)
             or len(value) != ROUND_COUNT
-            or not all(isinstance(v, int) for v in value)
+            or any(type(v) is not int for v in value)
         ):
             msg = f"config.{key} must be a list of {ROUND_COUNT} integer values"
             raise ValueError(msg)
-        return cast("RoundKeys", tuple(value))
+        return tuple(value)
 
     @staticmethod
     def _validate_int(j: dict[str, object], key: str) -> int:
         value = j[key]
-        if not isinstance(value, int):
+        if type(value) is not int:
             msg = f"config.{key} must be an integer"
-            raise ValueError(msg)  # ruff: ignore[type-check-without-type-error]
+            raise ValueError(msg)
+        return value
+
+    @staticmethod
+    def _validate_bits(j: dict[str, object], key: str) -> IntegerWidth:
+        value = Yurli._validate_int(j, key)
+        if value not in SUPPORTED_BITS:
+            msg = f"config.{key} must be one of {SUPPORTED_BITS}"
+            raise ValueError(msg)
         return value
 
     @staticmethod
