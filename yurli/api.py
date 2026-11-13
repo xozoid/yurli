@@ -176,9 +176,9 @@ class Yurli:
     @staticmethod
     def _validate_str(j: dict[str, object], key: str) -> str:
         value = j[key]
-        if not isinstance(value, str):
+        if type(value) is not str:
             msg = f"config.{key} must be a string"
-            raise ValueError(msg)  # ruff: ignore[type-check-without-type-error]
+            raise ValueError(msg)
         return value
 
     @staticmethod
