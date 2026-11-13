@@ -3,15 +3,17 @@
 from __future__ import annotations
 
 import math
+from collections import defaultdict
 from typing import TYPE_CHECKING
 
-from yurli.constants import DEFAULT_ALPHABET
+from yurli.constants import DEFAULT_ALPHABET, SUPPORTED_BITS
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from yurli.types import IntegerWidth
 
 _MINIMUM_ALPHABET_LENGTH = 2
-_SUPPORTED_BITS = (16, 32, 64)
 
 
 class AlphabetEncoder:
@@ -27,6 +29,7 @@ class AlphabetEncoder:
         bits: IntegerWidth,
         alphabet: str = DEFAULT_ALPHABET,
         length: int | None = None,
+        blocklist: Iterable[str] = (),
     ) -> None:
         """Create an encoder for a width and alphabet.
 
@@ -35,26 +38,32 @@ class AlphabetEncoder:
             alphabet: Ordered digits used for the positional representation.
             length: Optional emitted length. It must be large enough to encode
                 the complete configured domain.
+            blocklist: Case-insensitive substrings made impossible by pruning
+                characters from the candidate alphabet.
 
         Raises:
             ValueError: If the width or alphabet is invalid.
         """
-        if bits not in _SUPPORTED_BITS:
+        if bits not in SUPPORTED_BITS:
             msg = "bits must be one of 16, 32, or 64"
             raise ValueError(msg)
         self._validate_alphabet(alphabet)
-
-        self._alphabet = alphabet
-        self._base = len(alphabet)
         self._bits: IntegerWidth = bits
-        minimum_length = self._required_length(bits, self._base)
+        minimum_length = self._required_length(bits, len(alphabet))
         if length is not None and length < minimum_length:
             msg = f"length must be at least {minimum_length} for the configured domain"
             raise ValueError(msg)
 
-        self._digits = {c: i for i, c in enumerate(alphabet)}
+        self._alphabet = self._prune_alphabet(
+            bits,
+            self._normalize_blocklist(blocklist),
+            alphabet,
+            length,
+        )
+        self._base = len(self._alphabet)
+        self._digits = {c: i for i, c in enumerate(self._alphabet)}
         self._max_value = 1 << bits
-        self._length = length or minimum_length
+        self._length = max(length or 0, self._required_length(bits, self._base))
 
     @staticmethod
     def _validate_alphabet(alphabet: str) -> None:
@@ -76,6 +85,69 @@ class AlphabetEncoder:
     @classmethod
     def _required_length(cls, bits: IntegerWidth, base: int) -> int:
         return math.ceil(bits / math.log2(base))
+
+    @staticmethod
+    def _normalize_blocklist(blocklist: Iterable[str]) -> set[str]:
+        """Return non-empty ASCII entries normalized for matching.
+
+        Raises:
+            ValueError: If an entry is empty or non-ASCII.
+        """
+        normalized_blocklist: set[str] = set()
+        for word in blocklist:
+            if not word:
+                msg = "blocklist entries must be non-empty"
+                raise ValueError(msg)
+            if not word.isascii():
+                msg = "blocklist entries must contain only ASCII characters"
+                raise ValueError(msg)
+            normalized_blocklist.add(word.lower())
+        return normalized_blocklist
+
+    @classmethod
+    def _prune_alphabet(
+        cls,
+        bits: IntegerWidth,
+        blocklist: set[str],
+        alphabet: str,
+        length: int | None = None,
+    ) -> str:
+        """Return an ordered alphabet in which no relevant word is spellable."""
+
+        def prune(alphabet_set: set[str]) -> set[str]:
+            if len(alphabet_set) <= 1:
+                msg = "blocklist leaves insufficient alphabet characters"
+                raise ValueError(msg)
+
+            effective_length = max(
+                length or 0,
+                cls._required_length(bits, len(alphabet_set)),
+            )
+            alphabet_lower = {character.lower() for character in alphabet_set}
+            counts: dict[str, int] = defaultdict(int)
+            for word in blocklist:
+                if len(word) > effective_length:
+                    continue
+                word_alphabet = set(word)
+                if word_alphabet <= alphabet_lower:
+                    for character in word_alphabet:
+                        counts[character] += 1
+            if not counts:
+                return alphabet_set
+
+            remove = max(counts, key=lambda character: (counts[character], character))
+            return prune(
+                {
+                    character
+                    for character in alphabet_set
+                    if character.lower() != remove
+                },
+            )
+
+        reduced_alphabet = prune(set(alphabet))
+        return "".join(
+            character for character in alphabet if character in reduced_alphabet
+        )
 
     @property
     def alphabet(self) -> str:

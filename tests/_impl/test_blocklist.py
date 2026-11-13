@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import pytest
 
-from yurli._impl.blocklist import BlocklistEncoder
 from yurli._impl.encoding import AlphabetEncoder
 from yurli.constants import DEFAULT_ALPHABET
 
@@ -11,7 +10,7 @@ from yurli.constants import DEFAULT_ALPHABET
 def test_custom_blocklist_entries_never_appear_in_generated_identifiers(
     entry: str,
 ) -> None:
-    encoder = BlocklistEncoder(bits=16, blocklist={entry})
+    encoder = AlphabetEncoder(bits=16, blocklist={entry})
 
     identifiers = [encoder.encode(value) for value in range(1 << 16)]
     unsafe = [
@@ -22,7 +21,7 @@ def test_custom_blocklist_entries_never_appear_in_generated_identifiers(
 
 
 def test_case_insensitive_substring_is_excluded() -> None:
-    encoder = BlocklistEncoder(bits=16, blocklist={"A"})
+    encoder = AlphabetEncoder(bits=16, blocklist={"A"})
 
     identifier = encoder.encode(5)
 
@@ -32,7 +31,7 @@ def test_case_insensitive_substring_is_excluded() -> None:
 
 def test_16_bit_domain_is_unique_reversible_and_blocklist_free() -> None:
     blocklist = {"0", "a"}
-    encoder = BlocklistEncoder(bits=16, blocklist=blocklist)
+    encoder = AlphabetEncoder(bits=16, blocklist=blocklist)
 
     identifiers = [encoder.encode(value) for value in range(1 << 16)]
     unsafe = [
@@ -47,25 +46,22 @@ def test_16_bit_domain_is_unique_reversible_and_blocklist_free() -> None:
     assert decoded_values == list(range(1 << 16))
 
 
-@pytest.mark.parametrize(
-    "blocklist",
-    [
-        pytest.param((), id="empty-iterable"),
-        pytest.param(("",), id="only-empty-entry"),
-        pytest.param(("bad", ""), id="mixed-empty-entry"),
-    ],
-)
+@pytest.mark.parametrize("blocklist", [("",), ("bad", "")])
 def test_empty_blocklist_entries_are_rejected(blocklist: tuple[str, ...]) -> None:
-    with pytest.raises(
-        ValueError,
-        match="blocklist must contain at least one non-empty entry",
-    ):
-        BlocklistEncoder(bits=16, blocklist=blocklist)
+    with pytest.raises(ValueError, match="blocklist entries must be non-empty"):
+        AlphabetEncoder(bits=16, blocklist=blocklist)
+
+
+def test_empty_blocklist_preserves_candidate_alphabet() -> None:
+    encoder = AlphabetEncoder(bits=16)
+
+    assert encoder.alphabet == DEFAULT_ALPHABET
 
 
 def test_generator_blocklist_is_supported() -> None:
-    encoder = BlocklistEncoder(bits=16, blocklist=(word for word in ("bad",)))
-    assert encoder.blocklist == frozenset({"bad"})
+    encoder = AlphabetEncoder(bits=16, blocklist=(word for word in ("bad",)))
+
+    assert "bad" not in encoder.alphabet.lower()
 
 
 @pytest.mark.parametrize(
@@ -80,7 +76,7 @@ def test_non_ascii_blocklist_configuration_is_rejected(
     blocklist: set[str],
 ) -> None:
     with pytest.raises(ValueError, match="ASCII"):
-        BlocklistEncoder(bits=16, alphabet=alphabet, blocklist=blocklist)
+        AlphabetEncoder(bits=16, alphabet=alphabet, blocklist=blocklist)
 
 
 def test_alphabet_encoder_rejects_non_ascii_alphabet() -> None:
@@ -93,17 +89,17 @@ def test_duplicate_alphabet_is_rejected_before_pruning() -> None:
         ValueError,
         match="alphabet must not contain duplicate characters",
     ):
-        BlocklistEncoder(bits=16, alphabet="aabc", blocklist={"xyz"})
+        AlphabetEncoder(bits=16, alphabet="aabc", blocklist={"xyz"})
 
 
 def test_mixed_case_custom_alphabet_is_preserved() -> None:
-    encoder = BlocklistEncoder(bits=16, alphabet="aAbBcC", blocklist={"xyz"})
+    encoder = AlphabetEncoder(bits=16, alphabet="aAbBcC", blocklist={"xyz"})
 
     assert encoder.alphabet == "aAbBcC"
 
 
 def test_case_insensitive_pruning_removes_both_case_variants() -> None:
-    encoder = BlocklistEncoder(bits=16, alphabet="dCaAbB", blocklist={"A"})
+    encoder = AlphabetEncoder(bits=16, alphabet="dCaAbB", blocklist={"A"})
 
     assert encoder.alphabet == "dCbB"
 
@@ -130,13 +126,13 @@ def test_alphabet_reduces(
     blocklist: set[str],
     expected: str,
 ) -> None:
-    result = BlocklistEncoder._prune_alphabet(16, blocklist, alphabet)
+    result = AlphabetEncoder._prune_alphabet(16, blocklist, alphabet)
 
     assert result == expected
 
 
 def test_explicit_length_prunes_entries_that_fit_configured_identifier() -> None:
-    encoder = BlocklistEncoder(
+    encoder = AlphabetEncoder(
         bits=16,
         alphabet="abcd",
         blocklist={"aaaaaaaaa"},
@@ -149,7 +145,7 @@ def test_explicit_length_prunes_entries_that_fit_configured_identifier() -> None
 
 
 def test_entry_longer_than_actual_identifier_does_not_prune_alphabet() -> None:
-    encoder = BlocklistEncoder(
+    encoder = AlphabetEncoder(
         bits=16,
         alphabet="abcd",
         blocklist={"aaaaaaaaa"},
@@ -161,7 +157,7 @@ def test_entry_longer_than_actual_identifier_does_not_prune_alphabet() -> None:
 
 def test_explicit_length_shorter_than_original_minimum_is_rejected() -> None:
     with pytest.raises(ValueError, match="length must be at least 8"):
-        BlocklistEncoder(
+        AlphabetEncoder(
             bits=16,
             alphabet="abcd",
             blocklist={"xyz"},
@@ -184,7 +180,7 @@ def test_prune_alphabet_produces_safe_subset(
     blocklist: set[str],
     expected_length: int,
 ) -> None:
-    result = BlocklistEncoder._prune_alphabet(16, blocklist, alphabet)
+    result = AlphabetEncoder._prune_alphabet(16, blocklist, alphabet)
 
     assert len(result) == expected_length
     assert all(character in alphabet for character in result)
@@ -198,7 +194,7 @@ def test_greedy_pruning_can_be_suboptimal() -> None:
     alphabet = "abcdef"
     blocklist = {"ab", "ad", "cd", "ce"}
 
-    result = BlocklistEncoder._prune_alphabet(16, blocklist, alphabet)
+    result = AlphabetEncoder._prune_alphabet(16, blocklist, alphabet)
 
     assert result == "acf"
     assert len(result) == 3
@@ -207,4 +203,4 @@ def test_greedy_pruning_can_be_suboptimal() -> None:
 
 def test_blocklist_with_no_safe_alphabet_is_rejected() -> None:
     with pytest.raises(ValueError, match="insufficient"):
-        BlocklistEncoder(bits=16, blocklist=set(DEFAULT_ALPHABET))
+        AlphabetEncoder(bits=16, blocklist=set(DEFAULT_ALPHABET))

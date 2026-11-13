@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
@@ -22,6 +22,17 @@ def test_base62_lengths_cover_each_supported_domain(
     encoder = AlphabetEncoder(bits=bits)
 
     assert encoder.length == expected_length
+
+
+def test_unsupported_width_is_rejected() -> None:
+    with pytest.raises(ValueError, match="bits"):
+        AlphabetEncoder(bits=cast("IntegerWidth", 8))
+
+
+def test_bits_returns_configured_width() -> None:
+    encoder = AlphabetEncoder(bits=32)
+
+    assert encoder.bits == 32
 
 
 @pytest.mark.parametrize("bits", [16, 32, 64])

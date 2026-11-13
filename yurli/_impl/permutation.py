@@ -5,11 +5,11 @@ from __future__ import annotations
 import secrets
 from typing import TYPE_CHECKING
 
+from yurli.constants import ROUND_COUNT, SUPPORTED_BITS
+
 if TYPE_CHECKING:
     from yurli.types import IntegerWidth, RoundKeys
 
-_SUPPORTED_BITS = (16, 32, 64)
-_ROUND_COUNT = 4
 _UINT64_MASK = (1 << 64) - 1
 _SPLITMIX_MULTIPLIER_1 = 0xBF58476D1CE4E5B9
 _SPLITMIX_MULTIPLIER_2 = 0x94D049BB133111EB
@@ -35,7 +35,7 @@ class IntegerPermutation:
         Raises:
             ValueError: If the width or supplied round keys are invalid.
         """
-        if bits not in _SUPPORTED_BITS:
+        if bits not in SUPPORTED_BITS:
             msg = "bits must be one of 16, 32, or 64"
             raise ValueError(msg)
 
@@ -102,10 +102,12 @@ class IntegerPermutation:
 
     @staticmethod
     def _validate_round_keys(round_keys: RoundKeys) -> None:
-        if len(round_keys) != _ROUND_COUNT or any(
-            not 0 <= key <= _UINT64_MASK for key in round_keys
+        if len(round_keys) != ROUND_COUNT or any(
+            type(key) is not int or not 0 <= key <= _UINT64_MASK for key in round_keys
         ):
-            msg = "round_keys must be a tuple of four unsigned 64-bit integers"
+            msg = (
+                f"round_keys must be a tuple of {ROUND_COUNT} unsigned 64-bit integers"
+            )
             raise ValueError(msg)
 
     @staticmethod
