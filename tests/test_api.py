@@ -1,67 +1,58 @@
 from __future__ import annotations
 
-from importlib.metadata import version
+import json
+from typing import TYPE_CHECKING
 
-import pytest
-
-from yurli import (
-    EXAMPLE_BLOCKLIST,
-    IntegerWidth,
-    RoundKeys,
-    __version__,
-    types,
+from yurli.api import (
+    ConfigVersion,
+    PermutationVersion,
+    Yurli,
 )
-from yurli.api import Yurli
-from yurli.constants import EXAMPLE_BLOCKLIST as CONSTANT_BLOCKLIST
+
+if TYPE_CHECKING:
+    from yurli.api import YurliConfig
+
+_KEYS = (0, 1, 2, 3)
 
 
-def test_example_blocklist_is_publicly_exported() -> None:
-    assert EXAMPLE_BLOCKLIST == CONSTANT_BLOCKLIST
-    assert EXAMPLE_BLOCKLIST
+def test_kwargs_reconstruct_identical_codec() -> None:
+    codec = Yurli(bits=32, blocklist={"a"}, round_keys=_KEYS)
+    config: YurliConfig = codec.to_kwargs()
+    restored = Yurli(**config)
+    value = 12345
+
+    assert restored.encode(value) == codec.encode(value)
+    assert restored.decode(codec.encode(value)) == value
+    assert "blocklist" not in config
 
 
-def test_package_version_is_exported() -> None:
-    assert __version__ == version("yurli")
+def test_bytes_reconstruct_identical_codec() -> None:
+    codec = Yurli(bits=32, blocklist={"a"}, round_keys=_KEYS)
+    restored = Yurli.from_bytes(codec.to_bytes())
+    value = 12345
+
+    assert restored.encode(value) == codec.encode(value)
+    assert restored.decode(codec.encode(value)) == value
 
 
-@pytest.mark.parametrize(
-    ("package_type", "module_type"),
-    [
-        (IntegerWidth, types.IntegerWidth),
-        (RoundKeys, types.RoundKeys),
-    ],
-)
-def test_public_types_are_reexported(
-    package_type: object,
-    module_type: object,
-) -> None:
-    assert package_type is module_type
+def test_configuration_bytes_are_stable_json() -> None:
+    codec = Yurli(bits=16, round_keys=_KEYS)
+
+    serialized = codec.to_bytes()
+
+    assert serialized == codec.to_bytes()
+    assert json.loads(serialized) == {
+        "algorithm_version": 1,
+        "alphabet": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+        "bits": 16,
+        "format_version": 1,
+        "identifier_length": 3,
+        "round_keys": [0, 1, 2, 3],
+    }
 
 
-def test_constructor_is_a_stub() -> None:
-    with pytest.raises(NotImplementedError):
-        Yurli()
+def test_public_versions_are_serialized() -> None:
+    config = Yurli(bits=16, round_keys=_KEYS).to_kwargs()
 
-
-@pytest.mark.parametrize(
-    ("method_name", "arguments"),
-    [
-        ("encode", (0,)),
-        ("decode", ("000000000000",)),
-        ("to_kwargs", ()),
-        ("to_bytes", ()),
-    ],
-)
-def test_instance_methods_are_stubs(
-    method_name: str,
-    arguments: tuple[object, ...],
-) -> None:
-    codec = object.__new__(Yurli)
-
-    with pytest.raises(NotImplementedError):
-        getattr(codec, method_name)(*arguments)
-
-
-def test_from_bytes_is_a_stub() -> None:
-    with pytest.raises(NotImplementedError):
-        Yurli.from_bytes(b"")
+    assert config["format_version"] is ConfigVersion.V1
+    assert config["algorithm_version"] is PermutationVersion.FEISTEL_4_ROUND_V1

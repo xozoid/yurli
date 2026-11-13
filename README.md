@@ -8,9 +8,28 @@ yurli (/ˈjɝ.li/, “YUR-lee”) is a Python library for reversible, fixed-leng
 integer identifiers. It provides obfuscation, not encryption or authorization.
 
 The architecture and mathematical design are documented in
-[`docs/architecture.md`](docs/architecture.md). The first design PR exposes the planned
-public API as stubs; its methods raise `NotImplementedError` until later implementation
-PRs. The sorted, line-delimited example blocklist lives in
+[`docs/architecture.md`](docs/architecture.md). Create a codec, retain its serialized
+configuration, and use it to encode and decode IDs:
+
+```python
+from yurli import Yurli
+
+codec = Yurli()
+identifier = codec.encode(12345)
+assert codec.decode(identifier) == 12345
+
+saved_configuration = codec.to_bytes()
+restored_codec = Yurli.from_bytes(saved_configuration)
+assert restored_codec.decode(identifier) == 12345
+```
+
+Use `bits=16`, `bits=32`, or `bits=64` to select an unsigned domain. The constructor
+also accepts a custom alphabet and blocklist. Blocklist pruning is applied during
+construction; persisted configurations retain the resulting alphabet and fixed length,
+not the source blocklist. Changing any setting creates a different mapping, so retain
+the original serialized configuration to decode existing identifiers.
+
+The sorted, line-delimited example blocklist lives in
 [`yurli/blocklist.txt`](yurli/blocklist.txt). It's derived from Sqids data; see
 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for its attribution and license.
 Applications choose and maintain the blocklist policy appropriate for their identifiers.
