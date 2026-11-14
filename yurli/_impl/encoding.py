@@ -172,11 +172,13 @@ class AlphabetEncoder:
         """
         self._validate_value(value)
 
-        s = ""
-        for _ in range(self._length):
-            value, digit = divmod(value, self._base)
-            s += self.alphabet[digit]
-        return s
+        digits = [""] * self._length
+        alphabet = self._alphabet
+        base = self._base
+        for index in range(self._length):
+            value, digit = divmod(value, base)
+            digits[index] = alphabet[digit]
+        return "".join(digits)
 
     def decode(self, identifier: str, /) -> int:
         """Decode one fixed-width canonical identifier.

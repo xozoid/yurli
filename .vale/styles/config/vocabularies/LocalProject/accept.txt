@@ -9,6 +9,7 @@ Sqids
 X_b
 bijective
 blocklisted
+cProfile
 injective
 injectivity
 new-project
