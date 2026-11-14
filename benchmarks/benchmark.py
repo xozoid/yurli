@@ -19,8 +19,6 @@ from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, cast
 
-from sqids import Sqids
-
 from yurli import EXAMPLE_BLOCKLIST, IntegerWidth, Yurli
 from yurli._impl.encoding import AlphabetEncoder  # ruff: ignore[import-private-name]
 
@@ -76,6 +74,8 @@ class SqidsAdapter:
 
     def __init__(self, *, use_blocklist: bool) -> None:
         """Initialize Sqids with or without its default blocklist."""
+        from sqids import Sqids  # ruff: ignore[import-outside-top-level]
+
         self._codec = (
             Sqids(blocklist=list(EXAMPLE_BLOCKLIST))
             if use_blocklist
@@ -298,6 +298,8 @@ def render_results(results: Sequence[BenchmarkResult]) -> str:  # ruff: ignore[t
     Returns:
         A complete Markdown report for the current benchmark run.
     """
+    from sqids import Sqids  # ruff: ignore[import-outside-top-level]
+
     generated_at = datetime.now(UTC).isoformat(timespec="seconds")
     lines = [
         "# Benchmark results",
