@@ -132,16 +132,14 @@ def measure(
     factory: Callable[[], Codec],
     values: Sequence[int],
 ) -> Measurement:
-    """Measure initialization, operations, output length, and peak memory.
+    """Measure initialization and operation speed without memory tracing.
 
     Returns:
         Measurements for one codec and dataset.
     """
-    tracemalloc.start()
     start = time.perf_counter()
     codec = factory()
     initialization = time.perf_counter() - start
-    baseline, _ = tracemalloc.get_traced_memory()
 
     start = time.perf_counter()
     identifiers = [codec.encode(value) for value in values]
@@ -153,8 +151,6 @@ def measure(
     checksum = sum(decoded) + sum(map(len, identifiers))
     LOGGER.debug("Output checksum: %d", checksum)
 
-    _, peak = tracemalloc.get_traced_memory()
-    tracemalloc.stop()
     count = len(values)
     return Measurement(
         initialization_ms=initialization * 1000,
@@ -163,8 +159,26 @@ def measure(
         average_encode_us=encode_elapsed * 1_000_000 / count,
         average_decode_us=decode_elapsed * 1_000_000 / count,
         average_length=statistics.fmean(map(len, identifiers)),
-        peak_memory_kib=max(0, peak - baseline) / 1024,
+        peak_memory_kib=0,
     )
+
+
+def measure_peak_memory(factory: Callable[[], Codec], values: Sequence[int]) -> float:
+    """Measure retained output memory separately from operation timings.
+
+    Returns:
+        Additional peak traced memory in KiB, excluding codec initialization.
+    """
+    codec = factory()
+    tracemalloc.start()
+    baseline, _ = tracemalloc.get_traced_memory()
+    identifiers = [codec.encode(value) for value in values]
+    decoded = [codec.decode(identifier) for identifier in identifiers]
+    checksum = sum(decoded) + sum(map(len, identifiers))
+    LOGGER.debug("Memory pass checksum: %d", checksum)
+    _, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    return max(0, peak - baseline) / 1024
 
 
 def hardware_name() -> str:
@@ -196,8 +210,8 @@ def render_results(results: Sequence[BenchmarkResult]) -> str:
         f"- Random seed: {SEED} + integer width",
         "",
         (
-            "Throughput and latency include `tracemalloc` overhead. Values below are "
-            "from this"
+            "Speed measurements run without `tracemalloc`; peak memory is measured "
+            "in a separate pass. Values below are from this"
         ),
         "single run and shouldn't be treated as general performance claims.",
         "",
@@ -294,6 +308,15 @@ def run(*, profile: bool) -> None:
                 if profiler is not None:
                     profiler.enable()
                 result = measure(factory, values)
+                result = Measurement(
+                    initialization_ms=result.initialization_ms,
+                    encode_per_second=result.encode_per_second,
+                    decode_per_second=result.decode_per_second,
+                    average_encode_us=result.average_encode_us,
+                    average_decode_us=result.average_decode_us,
+                    average_length=result.average_length,
+                    peak_memory_kib=measure_peak_memory(factory, values),
+                )
                 if profiler is not None:
                     profiler.disable()
                     profiler.dump_stats(f"profile-{bits}-{dataset_name}-{label}.prof")
