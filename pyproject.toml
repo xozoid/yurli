@@ -45,6 +45,7 @@ test = ["pytest==9.2.0"]
 types = ["basedpyright==1.40.2", { include-group = "test" }]
 
 [tool.basedpyright]
+exclude = ["examples"]
 include = ["tests", "yurli"]
 pythonVersion = "3.12"
 typeCheckingMode = "strict"
