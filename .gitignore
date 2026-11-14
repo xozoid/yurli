@@ -2,6 +2,7 @@
 .venv/
 .env*
 yurli-config.json
+.scratch/
 
 # Python bytecode and caches
 __pycache__/

@@ -204,7 +204,7 @@ class AlphabetEncoder:
         return value
 
     def _validate_value(self, value: int) -> None:
-        if not 0 <= value < self._max_value:
+        if type(value) is not int or not 0 <= value < self._max_value:
             msg = f"value must be in the unsigned {self._bits}-bit domain"
             raise ValueError(msg)
 

@@ -60,9 +60,9 @@ each codec and is chosen to represent its entire integer domain.
 
 ## Custom blocklist
 
-Pass the substrings your application wants to exclude. Matching is case-insensitive.
-This small list is only an example; applications should choose and maintain their own
-policy.
+By default, no blocklist is applied. Pass the substrings your application wants to
+exclude. Matching is case-insensitive. This small list is only an example; applications
+should choose and maintain their own policy.
 
 ```python
 codec = Yurli(blocklist=["badword", "example"])

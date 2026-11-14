@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
@@ -105,6 +105,21 @@ def test_unsupported_widths_are_rejected(bits: IntegerWidth) -> None:
 def test_invalid_round_keys_are_rejected(round_keys: RoundKeys) -> None:
     with pytest.raises(ValueError, match="round_keys"):
         IntegerPermutation(bits=16, round_keys=round_keys)
+
+
+def test_mutable_round_keys_are_rejected() -> None:
+    round_keys = cast("RoundKeys", [0, 1, 2, 3])
+
+    with pytest.raises(ValueError, match="round_keys"):
+        IntegerPermutation(bits=16, round_keys=round_keys)
+
+
+@pytest.mark.parametrize("value", [True, 1.5])
+def test_non_integer_values_are_rejected(value: object) -> None:
+    permutation = IntegerPermutation(bits=16, round_keys=_TEST_KEYS)
+
+    with pytest.raises(ValueError, match="integer"):
+        permutation.permute(cast("int", value))
 
 
 def test_independently_generated_configurations_have_independent_keys() -> None:

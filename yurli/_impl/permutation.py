@@ -96,14 +96,19 @@ class IntegerPermutation:
         return (left << self._bits_half) | right
 
     def _validate_value(self, value: int) -> None:
-        if not 0 <= value < self._max_value:
+        if type(value) is not int or not 0 <= value < self._max_value:
             msg = f"value must be an integer in the unsigned {self._bits}-bit domain"
             raise ValueError(msg)
 
     @staticmethod
     def _validate_round_keys(round_keys: RoundKeys) -> None:
-        if len(round_keys) != ROUND_COUNT or any(
-            type(key) is not int or not 0 <= key <= _UINT64_MASK for key in round_keys
+        if (
+            type(round_keys) is not tuple
+            or len(round_keys) != ROUND_COUNT
+            or any(
+                type(key) is not int or not 0 <= key <= _UINT64_MASK
+                for key in round_keys
+            )
         ):
             msg = (
                 f"round_keys must be a tuple of {ROUND_COUNT} unsigned 64-bit integers"

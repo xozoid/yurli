@@ -101,6 +101,14 @@ def test_values_outside_the_configured_domain_are_rejected(value: int) -> None:
         encoder.encode(value)
 
 
+@pytest.mark.parametrize("value", [True, 1.5])
+def test_non_integer_values_are_rejected(value: object) -> None:
+    encoder = AlphabetEncoder(bits=16)
+
+    with pytest.raises(ValueError, match="unsigned"):
+        encoder.encode(cast("int", value))
+
+
 @pytest.mark.parametrize("alphabet", ["0", "001", "abca"])
 def test_invalid_alphabets_are_rejected(alphabet: str) -> None:
     with pytest.raises(ValueError, match="alphabet"):
