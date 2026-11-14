@@ -3,22 +3,26 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import cProfile
 import logging
 import platform
 import random
 import statistics
+import string
 import sys
 import time
 import tracemalloc
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 from sqids import Sqids
 
 from yurli import EXAMPLE_BLOCKLIST, IntegerWidth, Yurli
+from yurli._impl.encoding import AlphabetEncoder  # ruff: ignore[import-private-name]
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -93,6 +97,62 @@ class SqidsAdapter:
             The input integer.
         """
         return self._codec.decode(identifier)[0]
+
+
+class StdlibBaseAdapter:
+    """Adapt a standard-library bytes-to-text codec to integer inputs."""
+
+    def __init__(self, bits: int, name: str) -> None:
+        """Initialize a base codec for fixed-width big-endian integers."""
+        self._byte_length = bits // 8
+        self._encode = getattr(base64, f"{name}encode")
+        self._decode = getattr(base64, f"{name}decode")
+
+    def encode(self, value: int, /) -> str:
+        """Encode an integer as fixed-width big-endian bytes, then text.
+
+        Returns:
+            The encoded identifier.
+        """
+        return self._encode(value.to_bytes(self._byte_length, "big")).decode("ascii")
+
+    def decode(self, identifier: str, /) -> int:
+        """Decode text to fixed-width bytes, then to an integer.
+
+        Returns:
+            The decoded integer.
+        """
+        return int.from_bytes(self._decode(identifier.encode("ascii")), "big")
+
+
+def conversion_measure(
+    encode: Callable[[int], str],
+    decode: Callable[[str], int],
+    values: Sequence[int],
+) -> tuple[float, float, float]:
+    """Measure conversion throughput and mean encoded length.
+
+    Returns:
+        Encode operations per second, decode operations per second, and mean ID length.
+
+    Raises:
+        ValueError: If the conversion functions don't round trip the input values.
+    """
+    start = time.perf_counter()
+    identifiers = [encode(value) for value in values]
+    encode_elapsed = time.perf_counter() - start
+    start = time.perf_counter()
+    decoded = [decode(identifier) for identifier in identifiers]
+    decode_elapsed = time.perf_counter() - start
+    if decoded != list(values):
+        msg = "integer/string conversion did not round trip"
+        raise ValueError(msg)
+    count = len(values)
+    return (
+        count / encode_elapsed,
+        count / decode_elapsed,
+        statistics.fmean(map(len, identifiers)),
+    )
 
 
 @dataclass(frozen=True)
@@ -191,7 +251,7 @@ def hardware_name() -> str:
     return platform.processor() or "Not reported by platform"
 
 
-def render_results(results: Sequence[BenchmarkResult]) -> str:
+def render_results(results: Sequence[BenchmarkResult]) -> str:  # ruff: ignore[too-many-locals]
     """Render measurements and run metadata as a Markdown report.
 
     Returns:
@@ -238,9 +298,11 @@ def render_results(results: Sequence[BenchmarkResult]) -> str:
                 ):
                     continue
                 item = result.measurement
-                implementation = (
-                    "yurli" if result.codec.startswith("yurli") else "Sqids"
-                )
+                implementation = result.codec
+                if result.codec.startswith("yurli"):
+                    implementation = "yurli"
+                elif result.codec.startswith("sqids"):
+                    implementation = "Sqids"
                 lines.append(
                     f"| {implementation} | {result.dataset} | "
                     f"{item.initialization_ms:.3f} | "
@@ -252,6 +314,71 @@ def render_results(results: Sequence[BenchmarkResult]) -> str:
                     f"{item.peak_memory_kib:,.1f} |",
                 )
             lines.append("")
+    lines.extend(("## Integer/string conversion only", ""))
+    conversion_description = (
+        "These measurements call `AlphabetEncoder.encode`/`decode`, Sqids' internal "
+        "integer conversion helpers, or the standard-library Base encoders directly. "
+        "They exclude Yurli/Sqids wrapper logic and blocklist handling."
+    )
+    lines.extend((conversion_description, ""))
+    values = datasets(64)[1]
+    alphabet = string.ascii_letters + string.digits + string.punctuation
+    for base, label, stdlib_name in (
+        (16, "16 character alphabet", "b16"),
+        (32, "32 character alphabet", "b32"),
+        (64, "64 character alphabet", "b64"),
+        (85, "85 character alphabet", "b85"),
+    ):
+        lines.extend(
+            (
+                f"### {label}",
+                "",
+                "| Conversion | Encode / s | Decode / s | Avg ID length |",
+                "| --- | ---: | ---: | ---: |",
+            ),
+        )
+        alphabet_encoder = AlphabetEncoder(64, alphabet[:base])
+        sqids = Sqids(alphabet=alphabet[: base + 1], blocklist=[])
+        sqids_to_id = cast(
+            "Callable[[int, str], str]",
+            getattr(sqids, "_Sqids__to_id"),  # ruff: ignore[get-attr-with-constant]
+        )
+        sqids_to_number = cast(
+            "Callable[[str, str], int]",
+            getattr(sqids, "_Sqids__to_number"),  # ruff: ignore[get-attr-with-constant]
+        )
+        # Helpers take the shuffled digit alphabet without its prefix character.
+        sqids_alphabet = cast(
+            "str",
+            getattr(sqids, "_Sqids__alphabet"),  # ruff: ignore[get-attr-with-constant]
+        )
+        sqids_digits = sqids_alphabet[1:]
+        stdlib_adapter = StdlibBaseAdapter(64, stdlib_name)
+        conversions: list[tuple[str, Callable[[int], str], Callable[[str], int]]] = [
+            ("AlphabetEncoder", alphabet_encoder.encode, alphabet_encoder.decode),
+            (
+                "Sqids integer helpers",
+                partial(cast("Any", sqids_to_id), alphabet=sqids_digits),
+                partial(cast("Any", sqids_to_number), alphabet=sqids_digits),
+            ),
+            (
+                f"stdlib Base{base}",
+                stdlib_adapter.encode,
+                stdlib_adapter.decode,
+            ),
+        ]
+        for name, encode, decode in conversions:
+            encode_rate, decode_rate, average_length = conversion_measure(
+                encode,
+                decode,
+                values,
+            )
+            lines.append(
+                f"| {name} | {encode_rate:,.0f} | {decode_rate:,.0f} | "
+                f"{average_length:.2f} |",
+            )
+        lines.append("")
+    lines.append("")
     lines.extend(
         (
             "",
