@@ -367,6 +367,11 @@ def render_results(results: Sequence[BenchmarkResult]) -> str:  # ruff: ignore[t
                 stdlib_adapter.decode,
             ),
         ]
+        if stdlib_name == "b85":
+            ascii85_adapter = StdlibBaseAdapter(64, "a85")
+            conversions.append(
+                ("stdlib Ascii85", ascii85_adapter.encode, ascii85_adapter.decode),
+            )
         for name, encode, decode in conversions:
             encode_rate, decode_rate, average_length = conversion_measure(
                 encode,

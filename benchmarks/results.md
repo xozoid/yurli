@@ -1,6 +1,6 @@
 # Benchmark results
 
-Generated: 2026-11-14T19:27:16+00:00
+Generated: 2026-11-14T19:50:59+00:00
 
 - Python: 3.15.2 (CPython)
 - Operating system: Linux-7.0.0-43-generic-x86_64-with-glibc2.39
@@ -18,28 +18,28 @@ performance claims.
 
 | Implementation | Dataset    | Init (ms) | Encode / s | Decode / s | Encode (us) | Decode (us) | Avg ID length | Peak memory (KiB) |
 | -------------- | ---------- | --------: | ---------: | ---------: | ----------: | ----------: | ------------: | ----------------: |
-| yurli          | sequential |     0.329 |    294,334 |    293,145 |        3.40 |        3.41 |          3.00 |           8,919.3 |
-| Sqids          | sequential |     0.646 |    101,939 |    210,952 |        9.81 |        4.74 |          3.92 |           9,011.5 |
-| yurli          | random     |     0.289 |    302,140 |    294,204 |        3.31 |        3.40 |          3.00 |           8,934.7 |
-| Sqids          | random     |     0.625 |    102,611 |    214,139 |        9.75 |        4.67 |          3.94 |           9,028.7 |
+| yurli          | sequential |     0.337 |    295,751 |    308,490 |        3.38 |        3.24 |          3.00 |           8,919.3 |
+| Sqids          | sequential |     0.653 |    104,248 |    215,014 |        9.59 |        4.65 |          3.92 |           9,011.5 |
+| yurli          | random     |     0.285 |    308,783 |    314,886 |        3.24 |        3.18 |          3.00 |           8,934.8 |
+| Sqids          | random     |     0.636 |    102,824 |    211,123 |        9.73 |        4.74 |          3.94 |           9,028.7 |
 
 ### 32-bit
 
 | Implementation | Dataset    | Init (ms) | Encode / s | Decode / s | Encode (us) | Decode (us) | Avg ID length | Peak memory (KiB) |
 | -------------- | ---------- | --------: | ---------: | ---------: | ----------: | ----------: | ------------: | ----------------: |
-| yurli          | sequential |     1.354 |    262,886 |    262,453 |        3.80 |        3.81 |          6.00 |           9,247.2 |
-| Sqids          | sequential |     0.663 |     99,946 |    207,004 |       10.01 |        4.83 |          3.96 |           9,047.2 |
-| yurli          | random     |     1.385 |    247,876 |    251,535 |        4.03 |        3.98 |          6.00 |           9,279.6 |
-| Sqids          | random     |     0.632 |     75,640 |    140,142 |       13.22 |        7.14 |          6.80 |           9,356.2 |
+| yurli          | sequential |     1.324 |    270,941 |    274,430 |        3.69 |        3.64 |          6.00 |           9,247.4 |
+| Sqids          | sequential |     0.612 |    101,331 |    208,726 |        9.87 |        4.79 |          3.96 |           9,047.2 |
+| yurli          | random     |     1.340 |    267,816 |    269,276 |        3.73 |        3.71 |          6.00 |           9,279.6 |
+| Sqids          | random     |     0.637 |     73,869 |    140,258 |       13.54 |        7.13 |          6.80 |           9,356.2 |
 
 ### 64-bit
 
 | Implementation | Dataset    | Init (ms) | Encode / s | Decode / s | Encode (us) | Decode (us) | Avg ID length | Peak memory (KiB) |
 | -------------- | ---------- | --------: | ---------: | ---------: | ----------: | ----------: | ------------: | ----------------: |
-| yurli          | sequential |     2.517 |    221,585 |    210,990 |        4.51 |        4.74 |         12.00 |           9,833.4 |
-| Sqids          | sequential |     0.657 |    100,923 |    211,548 |        9.91 |        4.73 |          3.96 |           9,047.2 |
-| yurli          | random     |     2.582 |    219,668 |    209,240 |        4.55 |        4.78 |         12.00 |          10,208.1 |
-| Sqids          | random     |     0.649 |     70,225 |     84,182 |       14.24 |       11.88 |         11.92 |          10,202.5 |
+| yurli          | sequential |     2.448 |    224,764 |    214,919 |        4.45 |        4.65 |         12.00 |           9,833.4 |
+| Sqids          | sequential |     0.640 |    100,896 |    204,380 |        9.91 |        4.89 |          3.96 |           9,047.2 |
+| yurli          | random     |     2.449 |    219,860 |    210,102 |        4.55 |        4.76 |         12.00 |          10,208.1 |
+| Sqids          | random     |     0.623 |     70,984 |     84,631 |       14.09 |       11.82 |         11.92 |          10,202.5 |
 
 ## No blocklist
 
@@ -47,28 +47,28 @@ performance claims.
 
 | Implementation | Dataset    | Init (ms) | Encode / s | Decode / s | Encode (us) | Decode (us) | Avg ID length | Peak memory (KiB) |
 | -------------- | ---------- | --------: | ---------: | ---------: | ----------: | ----------: | ------------: | ----------------: |
-| yurli          | sequential |     0.071 |    278,075 |    297,754 |        3.60 |        3.36 |          3.00 |           8,919.3 |
-| Sqids          | sequential |     0.042 |    446,675 |    214,568 |        2.24 |        4.66 |          3.92 |           9,011.5 |
-| yurli          | random     |     0.091 |    302,832 |    297,927 |        3.30 |        3.36 |          3.00 |           8,934.7 |
-| Sqids          | random     |     0.040 |    439,102 |    212,455 |        2.28 |        4.71 |          3.94 |           9,028.7 |
+| yurli          | sequential |     0.084 |    274,767 |    275,321 |        3.64 |        3.63 |          3.00 |           8,919.3 |
+| Sqids          | sequential |     0.041 |    449,786 |    215,170 |        2.22 |        4.65 |          3.92 |           9,011.5 |
+| yurli          | random     |     0.066 |    307,277 |    315,165 |        3.25 |        3.17 |          3.00 |           8,934.8 |
+| Sqids          | random     |     0.043 |    472,272 |    208,919 |        2.12 |        4.79 |          3.94 |           9,028.7 |
 
 ### 32-bit
 
 | Implementation | Dataset    | Init (ms) | Encode / s | Decode / s | Encode (us) | Decode (us) | Avg ID length | Peak memory (KiB) |
 | -------------- | ---------- | --------: | ---------: | ---------: | ----------: | ----------: | ------------: | ----------------: |
-| yurli          | sequential |     0.078 |    265,329 |    262,868 |        3.77 |        3.80 |          6.00 |           9,246.9 |
-| Sqids          | sequential |     0.047 |    445,374 |    204,903 |        2.25 |        4.88 |          3.96 |           9,047.2 |
-| yurli          | random     |     0.067 |    255,422 |    251,052 |        3.92 |        3.98 |          6.00 |           9,279.5 |
-| Sqids          | random     |     0.047 |    372,189 |    143,383 |        2.69 |        6.97 |          6.80 |           9,356.2 |
+| yurli          | sequential |     0.069 |    272,190 |    279,012 |        3.67 |        3.58 |          6.00 |           9,247.3 |
+| Sqids          | sequential |     0.037 |    463,780 |    211,772 |        2.16 |        4.72 |          3.96 |           9,047.2 |
+| yurli          | random     |     0.067 |    261,361 |    268,114 |        3.83 |        3.73 |          6.00 |           9,279.4 |
+| Sqids          | random     |     0.043 |    367,377 |    141,013 |        2.72 |        7.09 |          6.80 |           9,356.2 |
 
 ### 64-bit
 
 | Implementation | Dataset    | Init (ms) | Encode / s | Decode / s | Encode (us) | Decode (us) | Avg ID length | Peak memory (KiB) |
 | -------------- | ---------- | --------: | ---------: | ---------: | ----------: | ----------: | ------------: | ----------------: |
-| yurli          | sequential |     0.069 |    227,945 |    210,516 |        4.39 |        4.75 |         11.00 |           9,735.8 |
-| Sqids          | sequential |     0.040 |    431,386 |    208,180 |        2.32 |        4.80 |          3.96 |           9,047.2 |
-| yurli          | random     |     0.081 |    221,723 |    207,148 |        4.51 |        4.83 |         11.00 |          10,110.4 |
-| Sqids          | random     |     0.054 |    289,109 |     84,477 |        3.46 |       11.84 |         11.92 |          10,202.5 |
+| yurli          | sequential |     0.068 |    229,571 |    217,774 |        4.36 |        4.59 |         11.00 |           9,735.8 |
+| Sqids          | sequential |     0.039 |    445,547 |    209,527 |        2.24 |        4.77 |          3.96 |           9,047.2 |
+| yurli          | random     |     0.081 |    228,900 |    217,583 |        4.37 |        4.60 |         11.00 |          10,110.4 |
+| Sqids          | random     |     0.046 |    290,961 |     84,537 |        3.44 |       11.83 |         11.92 |          10,202.5 |
 
 ## Integer/string conversion only
 
@@ -80,33 +80,34 @@ Yurli/Sqids wrapper logic and blocklist handling.
 
 | Conversion            | Encode / s | Decode / s | Avg ID length |
 | --------------------- | ---------: | ---------: | ------------: |
-| AlphabetEncoder       |    631,220 |    572,374 |         16.00 |
-| Sqids integer helpers |    517,953 |    201,749 |         15.87 |
-| stdlib Base16         |  4,078,107 |  1,555,209 |         16.00 |
+| AlphabetEncoder       |    606,879 |    574,541 |         16.00 |
+| Sqids integer helpers |    521,128 |    206,718 |         15.87 |
+| stdlib Base16         |  3,853,324 |  1,498,094 |         16.00 |
 
 ### 32 character alphabet
 
 | Conversion            | Encode / s | Decode / s | Avg ID length |
 | --------------------- | ---------: | ---------: | ------------: |
-| AlphabetEncoder       |    728,691 |    683,422 |         13.00 |
-| Sqids integer helpers |    633,182 |    198,914 |         12.87 |
-| stdlib Base32         |  3,828,796 |  2,381,121 |         16.00 |
+| AlphabetEncoder       |    724,842 |    683,261 |         13.00 |
+| Sqids integer helpers |    650,113 |    196,694 |         12.87 |
+| stdlib Base32         |  3,823,483 |  2,277,312 |         16.00 |
 
 ### 64 character alphabet
 
 | Conversion            | Encode / s | Decode / s | Avg ID length |
 | --------------------- | ---------: | ---------: | ------------: |
-| AlphabetEncoder       |    819,979 |    781,926 |         11.00 |
-| Sqids integer helpers |    738,537 |    161,264 |         10.88 |
-| stdlib Base64         |  3,179,486 |  2,190,193 |         12.00 |
+| AlphabetEncoder       |    838,330 |    794,220 |         11.00 |
+| Sqids integer helpers |    751,630 |    163,002 |         10.88 |
+| stdlib Base64         |  3,609,319 |  2,205,016 |         12.00 |
 
 ### 85 character alphabet
 
 | Conversion            | Encode / s | Decode / s | Avg ID length |
 | --------------------- | ---------: | ---------: | ------------: |
-| AlphabetEncoder       |    875,231 |    814,544 |         10.00 |
-| Sqids integer helpers |    799,720 |    146,715 |          9.97 |
-| stdlib Base85         |  3,947,802 |  3,305,485 |         10.00 |
+| AlphabetEncoder       |    898,965 |    829,739 |         10.00 |
+| Sqids integer helpers |    806,866 |    147,016 |          9.97 |
+| stdlib Base85         |  3,875,257 |  3,195,568 |         10.00 |
+| stdlib Ascii85        |  3,358,564 |  2,775,143 |         10.00 |
 
 For the 64-bit comparison, both libraries receive values limited to Sqids' signed
 platform integer range. This compares their shared input domain, not yurli's full

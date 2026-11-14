@@ -13,13 +13,13 @@ Sqids 0.5.2 with the same blocklist and with filtering disabled. A separate sect
 measures 64-bit integer/string conversion only under separate 16-, 32-, 64-, and
 85-character alphabet headings: `AlphabetEncoder` directly, Sqids' internal
 `__to_id`/`__to_number` helpers, and the matching standard-library Base16, Base32,
-Base64, and Base85 codecs. Base codecs convert fixed-width big-endian integer bytes. It
-reports initialization time, encode and decode throughput, average per-operation
-latency, average identifier length, and peak traced memory. Speed measurements run
-without `tracemalloc`; memory is measured in a separate pass so tracing overhead can't
-affect operation timings. Construction is timed separately from the 100,000 encodes and
-decodes in each timed operation batch. The encoded values are decoded and consumed in a
-checksum in both passes.
+Base64, and Base85 codecs. The 85-character section also measures Ascii85. Base codecs
+convert fixed-width big-endian integer bytes. It reports initialization time, encode and
+decode throughput, average per-operation latency, average identifier length, and peak
+traced memory. Speed measurements run without `tracemalloc`; memory is measured in a
+separate pass so tracing overhead can't affect operation timings. Construction is timed
+separately from the 100,000 encodes and decodes in each timed operation batch. The
+encoded values are decoded and consumed in a checksum in both passes.
 
 Each width has sequential values from zero and a repeatable uniformly distributed
 dataset generated with seed `20261114 + bits`. Sqids supports signed platform integers;
