@@ -29,6 +29,25 @@ def codec() -> Yurli:
     )
 
 
+@pytest.fixture
+def golden_codec() -> Yurli:
+    """Return a codec restored from a fixed version 1 configuration."""
+    return Yurli.from_bytes(
+        b'{"algorithm_version":1,"alphabet":'
+        b'"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",'
+        b'"bits":32,"format_version":1,"identifier_length":6,'
+        b'"round_keys":[0,1,2,3]}',
+    )
+
+
+def test_fixed_configuration_encodes_golden_identifier(golden_codec: Yurli) -> None:
+    assert golden_codec.encode(12345) == "7P8ic4"
+
+
+def test_fixed_configuration_decodes_golden_identifier(golden_codec: Yurli) -> None:
+    assert golden_codec.decode("7P8ic4") == 12345
+
+
 def test_kwargs_reconstruct_identical_codec(codec: Yurli) -> None:
     config: YurliConfig = codec.config
     restored = Yurli(**config)
