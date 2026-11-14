@@ -31,7 +31,8 @@ identifiers made with another random mapping.
 ## Configure and persist
 
 Choose a supported unsigned integer width and, optionally, an alphabet. The default
-alphabet has 62 URL-safe ASCII characters.
+alphabet has 62 URL-safe ASCII characters. Custom alphabets aren't guaranteed to be
+URL-safe; choose characters appropriate for your application's URL context.
 
 ```python
 codec = Yurli(

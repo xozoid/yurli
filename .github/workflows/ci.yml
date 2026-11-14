@@ -138,8 +138,18 @@ jobs:
       - run: uv build
       - run: uv venv --no-project --python ${{ matrix.python-version }} /tmp/wheel-test
       - run: uv pip install --python /tmp/wheel-test/bin/python dist/*.whl
-      - name: Verify installed wheel import
+      - name: Verify installed wheel and configuration
         run: |
           tmpdir=$(mktemp -d)
           cd "$tmpdir"
-          /tmp/wheel-test/bin/python -c "from yurli import Yurli; codec = Yurli(); assert codec.decode(codec.encode(12345)) == 12345"
+          /tmp/wheel-test/bin/python - <<'PY'
+          from yurli import Yurli
+
+          codec = Yurli()
+          value = 12345
+          identifier = codec.encode(value)
+          restored = Yurli.from_bytes(codec.to_bytes())
+
+          assert restored.decode(identifier) == value
+          assert restored.encode(value) == identifier
+          PY

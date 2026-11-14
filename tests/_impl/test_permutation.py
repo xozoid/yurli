@@ -16,6 +16,10 @@ if TYPE_CHECKING:
 _TEST_KEYS = (0, 1, 0x123456789ABCDEF0, _UINT64_MASK)
 
 
+class IntegerSubclass(int):
+    """An integer subclass that is not an exact integer."""
+
+
 @pytest.mark.parametrize(
     "round_keys",
     [_TEST_KEYS, (0, 0, 0, 0)],
@@ -90,6 +94,12 @@ def test_values_outside_configured_domain_are_rejected(
 def test_unsupported_widths_are_rejected(bits: IntegerWidth) -> None:
     with pytest.raises(ValueError, match="bits"):
         IntegerPermutation(bits=bits)
+
+
+@pytest.mark.parametrize("bits", [True, 16.0, "16", [], IntegerSubclass(16)])
+def test_non_integer_widths_are_rejected(bits: object) -> None:
+    with pytest.raises(ValueError, match="bits"):
+        IntegerPermutation(bits=cast("IntegerWidth", bits))
 
 
 @pytest.mark.parametrize(

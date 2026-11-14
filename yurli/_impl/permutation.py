@@ -35,6 +35,9 @@ class IntegerPermutation:
         Raises:
             ValueError: If the width or supplied round keys are invalid.
         """
+        if type(bits) is not int:
+            msg = "bits must be an integer"
+            raise ValueError(msg)
         if bits not in SUPPORTED_BITS:
             msg = "bits must be one of 16, 32, or 64"
             raise ValueError(msg)

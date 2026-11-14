@@ -44,8 +44,14 @@ class AlphabetEncoder:
         Raises:
             ValueError: If the width or alphabet is invalid.
         """
+        if type(bits) is not int:
+            msg = "bits must be an integer"
+            raise ValueError(msg)
         if bits not in SUPPORTED_BITS:
             msg = "bits must be one of 16, 32, or 64"
+            raise ValueError(msg)
+        if length is not None and type(length) is not int:
+            msg = "length must be an integer"
             raise ValueError(msg)
         self._validate_alphabet(alphabet)
         self._bits: IntegerWidth = bits
