@@ -99,7 +99,7 @@ required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
 "!**/conftest.py" = ["pytest-fixture-autouse"]
-"examples/**/*.py" = ["T201"]
+"examples/**/*.py" = ["print"]
 "tests/**/*.py" = [
   "assert",
   "boolean-type-hint-positional-argument",
