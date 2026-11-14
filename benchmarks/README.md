@@ -19,13 +19,17 @@ decode throughput, average per-operation latency, average identifier length, and
 traced memory. Speed measurements run without `tracemalloc`; memory is measured in a
 separate pass so tracing overhead can't affect operation timings. Construction is timed
 separately from the 100,000 encodes and decodes in each timed operation batch. The
-encoded values are decoded and consumed in a checksum in both passes.
+encoded values are decoded, validated, and consumed in a checksum in the timing and
+memory passes.
 
 Each width has sequential values from zero and a repeatable uniformly distributed
-dataset generated with seed `20261114 + bits`. Sqids supports signed platform integers;
-for the 64-bit comparison, both libraries receive values limited to that range rather
-than yurli's full unsigned 64-bit domain. Sqids comparisons therefore describe the
-shared input range, not its behavior over every yurli 64-bit value.
+dataset generated with seed `20261114 + bits`. Sequential datasets retain 100,000 values
+at every width. When the width's input domain is smaller than that dataset size, the
+sequence wraps around modulo the domain; the 16-bit dataset repeats values after 65,536.
+Sqids supports signed platform integers; for the 64-bit comparison, both libraries
+receive values limited to that range rather than yurli's full unsigned 64-bit domain.
+Sqids comparisons therefore describe the shared input range, not its behavior over every
+yurli 64-bit value.
 
 The script prints the Python implementation and version and the operating system and
 architecture and writes all results and environment details to
@@ -41,5 +45,8 @@ To collect cProfile files for yurli's runs:
 uv run --group benchmark python benchmarks/benchmark.py --profile
 ```
 
-The profile files are written to the current directory and aren't needed to run the
-library.
+Profiling runs in a separate pass after the normal timing and memory measurements. It
+profiles only yurli, so `--profile` doesn't change benchmark throughput or memory
+results. The profile pass still performs encode/decode operations, outside those
+measurements. The profile files are written to the current directory and aren't needed
+to run the library.

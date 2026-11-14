@@ -179,7 +179,11 @@ class BenchmarkResult:
 
 
 def datasets(bits: int) -> tuple[list[int], list[int]]:
-    """Return repeatable sequential and uniformly distributed inputs."""
+    """Return repeatable sequential and uniformly distributed inputs.
+
+    Sequential inputs wrap around when the input domain is smaller than
+    ``DATASET_SIZE``.
+    """
     # Sqids uses the platform signed integer limit, including for Yurli's 64-bit run.
     maximum = min(1 << bits, sys.maxsize + 1)
     sequential = [value % maximum for value in range(DATASET_SIZE)]
@@ -208,6 +212,7 @@ def measure(
     start = time.perf_counter()
     decoded = [codec.decode(identifier) for identifier in identifiers]
     decode_elapsed = time.perf_counter() - start
+    _validate_round_trip(values, decoded)
     checksum = sum(decoded) + sum(map(len, identifiers))
     LOGGER.debug("Output checksum: %d", checksum)
 
@@ -231,14 +236,50 @@ def measure_peak_memory(factory: Callable[[], Codec], values: Sequence[int]) -> 
     """
     codec = factory()
     tracemalloc.start()
-    baseline, _ = tracemalloc.get_traced_memory()
-    identifiers = [codec.encode(value) for value in values]
-    decoded = [codec.decode(identifier) for identifier in identifiers]
+    try:
+        baseline, _ = tracemalloc.get_traced_memory()
+        identifiers = [codec.encode(value) for value in values]
+        decoded = [codec.decode(identifier) for identifier in identifiers]
+        _, peak = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+    _validate_round_trip(values, decoded)
     checksum = sum(decoded) + sum(map(len, identifiers))
     LOGGER.debug("Memory pass checksum: %d", checksum)
-    _, peak = tracemalloc.get_traced_memory()
-    tracemalloc.stop()
     return max(0, peak - baseline) / 1024
+
+
+def _validate_round_trip(values: Sequence[int], decoded: Sequence[int]) -> None:
+    """Raise when decoded results differ from their original inputs.
+
+    Raises:
+        ValueError: If decoded results don't match their inputs.
+    """
+    if any(
+        actual != expected for expected, actual in zip(values, decoded, strict=True)
+    ):
+        msg = "integer/string conversion did not round trip"
+        raise ValueError(msg)
+
+
+def profile_measure(
+    factory: Callable[[], Codec],
+    values: Sequence[int],
+    output_path: Path,
+) -> None:
+    """Profile one untimed encode/decode pass and write its cProfile data."""
+    profiler = cProfile.Profile()
+    try:
+        profiler.enable()
+        codec = factory()
+        identifiers = [codec.encode(value) for value in values]
+        decoded = [codec.decode(identifier) for identifier in identifiers]
+    finally:
+        profiler.disable()
+    _validate_round_trip(values, decoded)
+    checksum = sum(decoded) + sum(map(len, identifiers))
+    LOGGER.debug("Profile pass checksum: %d", checksum)
+    profiler.dump_stats(str(output_path))
 
 
 def hardware_name() -> str:
@@ -432,13 +473,6 @@ def run(*, profile: bool) -> None:
                 ("sqids-no-blocklist", lambda: SqidsAdapter(use_blocklist=False)),
             )
             for label, factory in cases:
-                profiler = (
-                    cProfile.Profile()
-                    if profile and label.startswith("yurli")
-                    else None
-                )
-                if profiler is not None:
-                    profiler.enable()
                 result = measure(factory, values)
                 result = Measurement(
                     initialization_ms=result.initialization_ms,
@@ -449,11 +483,25 @@ def run(*, profile: bool) -> None:
                     average_length=result.average_length,
                     peak_memory_kib=measure_peak_memory(factory, values),
                 )
-                if profiler is not None:
-                    profiler.disable()
-                    profiler.dump_stats(f"profile-{bits}-{dataset_name}-{label}.prof")
                 results.append(BenchmarkResult(bits, dataset_name, label, result))
                 LOGGER.info("%2s bit %-10s %-20s %s", bits, dataset_name, label, result)
+    if profile:
+        for bits in WIDTHS:
+            for dataset_name, values in zip(
+                ("sequential", "random"),
+                datasets(bits),
+                strict=True,
+            ):
+                for use_blocklist, label in (
+                    (True, "yurli-default"),
+                    (False, "yurli-no-blocklist"),
+                ):
+                    factory = partial(YurliAdapter, bits, use_blocklist=use_blocklist)
+                    profile_measure(
+                        factory,
+                        values,
+                        Path(f"profile-{bits}-{dataset_name}-{label}.prof"),
+                    )
     RESULTS_PATH.write_text(render_results(results), encoding="utf-8")
     LOGGER.info("Wrote results to %s", RESULTS_PATH)
 
