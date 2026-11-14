@@ -45,6 +45,7 @@ test = ["pytest==9.2.0"]
 types = ["basedpyright==1.40.2", { include-group = "test" }]
 
 [tool.basedpyright]
+exclude = ["examples/fastapi.py", "examples/flask.py"]
 include = ["tests", "yurli"]
 pythonVersion = "3.12"
 typeCheckingMode = "strict"
@@ -98,6 +99,7 @@ required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
 "!**/conftest.py" = ["pytest-fixture-autouse"]
+"examples/**/*.py" = ["print"]
 "tests/**/*.py" = [
   "assert",
   "boolean-type-hint-positional-argument",

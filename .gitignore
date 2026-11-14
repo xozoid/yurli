@@ -1,6 +1,7 @@
 # Local environments and secrets
 .venv/
 .env*
+yurli-config.json
 
 # Python bytecode and caches
 __pycache__/
