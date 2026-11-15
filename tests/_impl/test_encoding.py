@@ -11,6 +11,10 @@ if TYPE_CHECKING:
     from yurli.types import IntegerWidth
 
 
+class IntegerSubclass(int):
+    """An integer subclass that is not an exact integer."""
+
+
 @pytest.mark.parametrize(
     ("bits", "expected_length"),
     [(16, 3), (32, 6), (64, 11)],
@@ -27,6 +31,30 @@ def test_base62_lengths_cover_each_supported_domain(
 def test_unsupported_width_is_rejected() -> None:
     with pytest.raises(ValueError, match="bits"):
         AlphabetEncoder(bits=cast("IntegerWidth", 8))
+
+
+@pytest.mark.parametrize("bits", [True, 16.0, "16", [], IntegerSubclass(16)])
+def test_non_integer_width_is_rejected(bits: object) -> None:
+    with pytest.raises(ValueError, match="bits"):
+        AlphabetEncoder(bits=cast("IntegerWidth", bits))
+
+
+@pytest.mark.parametrize("length", [True, 3.0, "3", [], IntegerSubclass(3)])
+def test_non_integer_length_is_rejected(length: object) -> None:
+    with pytest.raises(ValueError, match="length"):
+        AlphabetEncoder(bits=16, length=cast("int", length))
+
+
+@pytest.mark.parametrize("length", [3, 4])
+def test_valid_explicit_lengths_are_accepted(length: int) -> None:
+    encoder = AlphabetEncoder(bits=16, length=length)
+
+    assert encoder.length == length
+
+
+def test_length_below_minimum_is_rejected() -> None:
+    with pytest.raises(ValueError, match="length"):
+        AlphabetEncoder(bits=16, length=2)
 
 
 def test_bits_returns_configured_width() -> None:
@@ -99,6 +127,14 @@ def test_values_outside_the_configured_domain_are_rejected(value: int) -> None:
 
     with pytest.raises(ValueError, match="unsigned"):
         encoder.encode(value)
+
+
+@pytest.mark.parametrize("value", [True, 1.5])
+def test_non_integer_values_are_rejected(value: object) -> None:
+    encoder = AlphabetEncoder(bits=16)
+
+    with pytest.raises(ValueError, match="unsigned"):
+        encoder.encode(cast("int", value))
 
 
 @pytest.mark.parametrize("alphabet", ["0", "001", "abca"])

@@ -31,7 +31,8 @@ identifiers made with another random mapping.
 ## Configure and persist
 
 Choose a supported unsigned integer width and, optionally, an alphabet. The default
-alphabet has 62 URL-safe ASCII characters.
+alphabet has 62 URL-safe ASCII characters. Custom alphabets aren't guaranteed to be
+URL-safe; choose characters appropriate for your application's URL context.
 
 ```python
 codec = Yurli(
@@ -60,9 +61,9 @@ each codec and is chosen to represent its entire integer domain.
 
 ## Custom blocklist
 
-Pass the substrings your application wants to exclude. Matching is case-insensitive.
-This small list is only an example; applications should choose and maintain their own
-policy.
+By default, no blocklist is applied. Pass the substrings your application wants to
+exclude. Matching is case-insensitive. This small list is only an example; applications
+should choose and maintain their own policy.
 
 ```python
 codec = Yurli(blocklist=["badword", "example"])

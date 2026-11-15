@@ -4,7 +4,7 @@ requires = ["hatch-vcs>=0.5", "hatchling>=1.33.0"]
 
 [project]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 5 - Production/Stable",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.12",
@@ -13,7 +13,7 @@ classifiers = [
   "Programming Language :: Python :: 3.15",
 ]
 dependencies = []
-description = "Cute URLs for ugly IDs. A fast, stateless, reversible, profanity-free integer obfuscation library for Python."
+description = "Cute URLs for ugly IDs. Reversible integer obfuscation with optional blocklist filtering."
 dynamic = ["version"]
 keywords = ["python", "yurli"]
 license = "MIT"

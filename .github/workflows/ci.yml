@@ -125,17 +125,31 @@ jobs:
           path: .coverage
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13", "3.14", "3.15"]
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
         with:
-          python-version: "3.15"
+          python-version: ${{ matrix.python-version }}
           enable-cache: true
       - run: uv build
-      - run: uv venv --no-project /tmp/wheel-test
+      - run: uv venv --no-project --python ${{ matrix.python-version }} /tmp/wheel-test
       - run: uv pip install --python /tmp/wheel-test/bin/python dist/*.whl
-      - name: Verify installed wheel import
+      - name: Verify installed wheel and configuration
         run: |
           tmpdir=$(mktemp -d)
           cd "$tmpdir"
-          /tmp/wheel-test/bin/python -c "import yurli"
+          /tmp/wheel-test/bin/python - <<'PY'
+          from yurli import Yurli
+
+          codec = Yurli()
+          value = 12345
+          identifier = codec.encode(value)
+          restored = Yurli.from_bytes(codec.to_bytes())
+
+          assert restored.decode(identifier) == value
+          assert restored.encode(value) == identifier
+          PY
