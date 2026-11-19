@@ -38,8 +38,7 @@ Run tests and coverage from the repository root:
 
 ```sh
 uv run pytest
-uv run coverage run -m pytest
-uv run coverage report
+uv run pytest --cov
 ```
 
 The coverage report enforces the configured 100% minimum. `tools/linters.sh` runs Ruff,
