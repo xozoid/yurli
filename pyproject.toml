@@ -38,7 +38,7 @@ format = [
   { include-group = "lint" },
   { include-group = "prek" },
 ]
-lint = ["ruff==0.17.4"]
+lint = ["ruff==0.17.5"]
 prek = ["prek==0.5.10"]
 spell = ["codespell==2.4.3"]
 test = ["pytest==9.2.0"]
