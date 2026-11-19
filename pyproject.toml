@@ -24,7 +24,7 @@ requires-python = ">=3.12"
 
 [dependency-groups]
 benchmark = ["sqids==0.5.2"]
-coverage = ["coverage[toml]==7.17.2", { include-group = "test" }]
+coverage = ["coverage[toml]==7.17.3", { include-group = "test" }]
 dev = [
   "build==1.6.1",
   { include-group = "coverage" },
