@@ -39,7 +39,7 @@ format = [
   { include-group = "prek" },
 ]
 lint = ["ruff==0.17.5"]
-prek = ["prek==0.5.10"]
+prek = ["prek==0.5.11"]
 spell = ["codespell==2.4.3"]
 test = ["pytest==9.2.0"]
 types = ["basedpyright==1.40.2", { include-group = "test" }]
